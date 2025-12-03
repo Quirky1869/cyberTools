@@ -2,7 +2,7 @@
 
 ![](./_images/cyberTools.png)  
 
-![Static Badge](https://img.shields.io/badge/cyberTools-cyan?style=plastic)
+![Static Badge](https://img.shields.io/badge/TUI-cyberTools-cyan?style=plastic)
 ![Static Badge](https://img.shields.io/badge/License-MIT-8A2BE2?style=plastic)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?style=plastic&logo=go)](https://golang.org/)
 
