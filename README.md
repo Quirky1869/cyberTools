@@ -1,6 +1,6 @@
 # cyberTools
 
-![](./_images/cyberTools.png)  
+![](./_images/cyberTools.png)
 
 ![Static Badge](https://img.shields.io/badge/TUI-cyberTools-cyan?style=plastic)
 ![Static Badge](https://img.shields.io/badge/License-MIT-8A2BE2?style=plastic)
@@ -9,10 +9,11 @@
 [![Latest Version](https://img.shields.io/github/v/release/Quirky1869/cyberTools)](https://github.com/Quirky1869/cyberTools/releases)
 
 ## Résumé
-
+<p align="center">  
 <a href="https://golang.org" target="_blank" rel="noreferrer">  
   <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/go/go-original.svg" alt="go" width="40" height="40"/>  
 </a>  
+</p>  
 
 ## Fonctionnalités
 
@@ -45,7 +46,7 @@
 | ------------------------------------------------------------ | ------------------------------------ |
 | [Bubble Tea](https://github.com/charmbracelet/bubbletea)     | Gestion de l’interface TUI           |
 | [Lipgloss](https://github.com/charmbracelet/lipgloss)        | Stylisation du texte et des bordures |
-| [Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=flat&logo=go&logoColor=white) [Golang](https://go.dev)   | Scripts d’installation des paquets   |
+| ![Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=flat&logo=go&logoColor=white) [Golang](https://go.dev)   | Scripts d’installation des paquets   |
 
 
 ## Auteur
@@ -56,3 +57,5 @@ Projet développé par Quirky
 </a>  
 
 ## Licence
+
+Ce projet est distribué sous licence MIT  
