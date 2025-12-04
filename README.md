@@ -10,6 +10,10 @@
 
 ## Résumé
 
+<a href="https://golang.org" target="_blank" rel="noreferrer">  
+  <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/go/go-original.svg" alt="go" width="40" height="40"/>  
+</a>  
+
 ## Fonctionnalités
 
 ## Structure du projet  
@@ -37,6 +41,18 @@
 
 ## Technologies utilisées
 
+| Librairie                                                    | Utilisation                          |
+| ------------------------------------------------------------ | ------------------------------------ |
+| [Bubble Tea](https://github.com/charmbracelet/bubbletea)     | Gestion de l’interface TUI           |
+| [Lipgloss](https://github.com/charmbracelet/lipgloss)        | Stylisation du texte et des bordures |
+| [Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=flat&logo=go&logoColor=white) [Golang](https://go.dev)   | Scripts d’installation des paquets   |
+
+
 ## Auteur
+
+Projet développé par Quirky  
+<a href="https://github.com/Quirky1869" target="_blank">  
+  <img src="./_images/white-github.png" alt="GitHub" width="30" height="30" style="vertical-align:middle;"> GitHub  
+</a>  
 
 ## Licence
