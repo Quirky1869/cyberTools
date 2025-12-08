@@ -5,84 +5,105 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Palette Neon Theme
-const (
-	ColorPrimary   		= "#500aff"
-	ColorSecondary 		= "#00f6ff"
-	ColorText      		= "#FAFAFA"
-	ColorGray      		= "#626262"
-	ColorTertiary      	= "#FF2A6D"
-	ColorQuaternary     = "#39FF14"
-	ColorQuinary    	= "#FFE700"
-	ColorSenary    		= "#ff5e00"
+// 1. Définition de la structure d'une Palette de couleurs
+type ThemePalette struct {
+	Primary    string
+	Secondary  string
+	Text       string
+	Gray       string
+	Tertiary   string
+	Quaternary string
+	Quinary    string
+	Senary     string
+}
+
+// 2. Définition des thèmes disponibles
+var (
+	NeonTheme = ThemePalette{
+		Primary:    "#500aff",
+		Secondary:  "#00f6ff",
+		Text:       "#FAFAFA",
+		Gray:       "#626262",
+		Tertiary:   "#FF2A6D",
+		Quaternary: "#39FF14",
+		Quinary:    "#FFE700",
+		Senary:     "#ff5e00",
+	}
+
+	CyberpunkTheme = ThemePalette{
+		Primary:    "#FCEE0A", // Jaune
+		Secondary:  "#00F0FF", // Bleu Holo
+		Text:       "#FAFAFA",
+		Gray:       "#626262",
+		Tertiary:   "#FF003C", // Rouge Glitch
+		Quaternary: "#39FF14", // Vert Acide
+		Quinary:    "#FF00FF", // Rose Hot
+		Senary:     "#FF8C00", // Orange
+	}
 )
 
-// Palette Cyberpunk Theme
-// const (
-// 	ColorPrimary   		= "#FCEE0A" // Cyberpunk Yellow
-// 	ColorSecondary 		= "#00F0FF" // Holo Blue
-// 	ColorText      		= "#FAFAFA" // White
-// 	ColorGray      		= "#626262" // Gray
-// 	ColorTertiary      	= "#FF003C" // Glitch Red
-// 	ColorQuaternary     = "#39FF14" // Acid Green
-// 	ColorQuinary    	= "#FF00FF" // Hot Pink
-// 	ColorSenary    		= "#FF8C00" // Sunset Orange
-// )
+// 3. Structure regroupant tous tes styles Lipgloss
+// Au lieu de variables globales, on les met dans une boîte
+type Styles struct {
+	Doc          lipgloss.Style
+	ActiveTab    lipgloss.Style
+	InactiveTab  lipgloss.Style
+	Window       lipgloss.Style
+	SelectedTool lipgloss.Style
+	Tool         lipgloss.Style
+	ToolName     lipgloss.Style
+	ToolDesc     lipgloss.Style
+	Help         help.Styles
+	Palette      ThemePalette 
+}
 
-var (
-	// Style global pour centrer
-	DocStyle = lipgloss.NewStyle().Padding(1, 2)
+// 4. Le Générateur : Il fabrique les styles à partir d'une palette donnée
+func MakeStyles(t ThemePalette) Styles {
+	return Styles{
+		Palette: t,
 
-	// Onglet actif (brillant, couleur secondaire)
-	ActiveTabStyle = lipgloss.NewStyle().
+		Doc: lipgloss.NewStyle().Padding(1, 2),
+
+		ActiveTab: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(ColorSecondary)).
+			BorderForeground(lipgloss.Color(t.Secondary)).
 			Padding(0, 3).
 			Margin(0, 1).
 			MarginTop(1).
-			Foreground(lipgloss.Color(ColorTertiary)).
-			Bold(true)
+			Foreground(lipgloss.Color(t.Tertiary)).
+			Bold(true),
 
-	// Onglet inactif (plus sombre, couleur primaire)
-	InactiveTabStyle = lipgloss.NewStyle().
-		// Border(lipgloss.RoundedBorder()).
-		Border(lipgloss.HiddenBorder()).
-		BorderForeground(lipgloss.Color(ColorPrimary)).
-		Padding(0, 1).
-		Foreground(lipgloss.Color(ColorGray))
+		InactiveTab: lipgloss.NewStyle().
+			Border(lipgloss.HiddenBorder()).
+			BorderForeground(lipgloss.Color(t.Primary)).
+			Padding(0, 1).
+			Foreground(lipgloss.Color(t.Gray)),
 
-	// --- Style du contenu (Liste des outils) ---
-
-	// La fenêtre principale qui contient la liste
-	WindowStyle = lipgloss.NewStyle().
+		Window: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(ColorPrimary)).
+			BorderForeground(lipgloss.Color(t.Primary)).
 			Padding(1, 2).
-			Align(lipgloss.Left)
+			Align(lipgloss.Left),
 
-	// Outil sélectionné
-	SelectedToolStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorTertiary)).
-				PaddingLeft(1).
-				Bold(true).
-				SetString("→") // Ajoute une flèche devant
+		SelectedTool: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Tertiary)).
+			PaddingLeft(1).
+			Bold(true).
+			SetString("→"),
 
-	// Outil non sélectionné
-	ToolStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorText)).
-			PaddingLeft(2) // Pour aligner avec le curseur du dessus
+		Tool: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Text)).
+			PaddingLeft(2),
 
-	// Titre de l'outil (Nom)
-	ToolNameStyle = lipgloss.NewStyle().Bold(true)
+		ToolName: lipgloss.NewStyle().Bold(true),
 
-	// Description des outils (plus discret)
-	ToolDescStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorGray))
+		ToolDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Gray)),
 
-	// Défini les couleurs de l'aide (en bas de la TUI)
-	HelpStyles = help.Styles{
-		ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorQuaternary)),
-		ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(ColorTertiary)),
-		FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(ColorQuaternary)),
-		FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorTertiary)),
+		Help: help.Styles{
+			ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quaternary)),
+			ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Tertiary)),
+			FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quaternary)),
+			FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Tertiary)),
+		},
 	}
-)
+}
