@@ -25,16 +25,19 @@ var (
 	ActiveTabStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color(ColorSecondary)).
-			Padding(0, 1).
+			Padding(0, 3).
+			Margin(0, 1).
+			MarginTop(1).
 			Foreground(lipgloss.Color(ColorPink)).
 			Bold(true)
 
 	// Onglet inactif (plus sombre, couleur primaire)
 	InactiveTabStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color(ColorPrimary)).
-				Padding(0, 1).
-				Foreground(lipgloss.Color(ColorGray))
+		// Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.HiddenBorder()).
+		BorderForeground(lipgloss.Color(ColorPrimary)).
+		Padding(0, 1).
+		Foreground(lipgloss.Color(ColorGray))
 
 	// --- Style du contenu (Liste des outils) ---
 
