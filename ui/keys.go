@@ -55,7 +55,7 @@ var DefaultKeyMap = KeyMap{
 		key.WithHelp("enter", "valider"),
 	),
 	Help: key.NewBinding(
-		key.WithKeys("?"),
+		key.WithKeys("?",","),
 		key.WithHelp("?", "aide"),
 	),
 	Quit: key.NewBinding(
