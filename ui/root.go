@@ -33,12 +33,14 @@ type Model struct {
 }
 
 func NewModel() Model {
+	helpPaint := help.New()
+	helpPaint.Styles = HelpStyles
 	return Model{
 		categories: tools.GetCategories(),
 		focus:      FocusCategories,
 		// Initialisation des touches et de l'aide
 		keys:       DefaultKeyMap,
-		help:       help.New(),
+		help:       helpPaint,
 	}
 }
 
@@ -108,16 +110,32 @@ func (m Model) View() string {
 		return "loading..."
 	}
 
-	// 1. Navbar (Onglets)
-	var tabs []string
-	for i, cat := range m.categories {
-		style := InactiveTabStyle
-		if m.activeCatIndex == i {
-			style = ActiveTabStyle
-		}
-		tabs = append(tabs, style.Render(cat.Name))
-	}
-	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
+// 1. Navbar (Onglets)
+var tabs []string
+for i, cat := range m.categories {
+    style := InactiveTabStyle
+    
+    // 1. Déterminer si c'est l'onglet ACTIF (ouvert)
+    if m.activeCatIndex == i {
+        // Appliquer la couleur du texte et les styles du ActiveTabStyle
+        style = ActiveTabStyle.Copy() 
+        
+        // 2. Déterminer le focus clavier
+        // Si nous sommes sur cette catégorie ET que le focus est sur les Catégories,
+        // on utilise la couleur Secondary (Cyan) pour le contour.
+        if m.focus == FocusCategories {
+            // Le contour devient Secondary (Cyan)
+            style = style.BorderForeground(lipgloss.Color(ColorSecondary))
+        } else {
+            // L'onglet est actif mais le focus est sur les Outils,
+            // le texte reste Pink, mais le contour redevient Primary (Violet).
+            style = style.BorderForeground(lipgloss.Color(ColorPrimary))
+        }
+    }
+
+    tabs = append(tabs, style.Render(cat.Name))
+}
+row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
 	// 2. Contenu (Liste outils)
 	currentTools := m.categories[m.activeCatIndex].Tools
@@ -128,7 +146,6 @@ func (m Model) View() string {
 		cursor := "  "
 		if m.activeToolIndex == i {
 			style = SelectedToolStyle
-			cursor = "> "
 		}
 		name := ToolNameStyle.Render(tool.Name)
 		desc := ToolDescStyle.Render("(" + tool.Description + ")")
