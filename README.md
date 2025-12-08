@@ -25,6 +25,8 @@
 ├── cmd
 │   └── app
 │       └── main.go # Point d'entrée du programme  
+├── bin
+│    └──cyberTools
 ├── tools
 │   └── definition.go
 │   └── tools1.go
