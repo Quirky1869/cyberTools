@@ -117,11 +117,12 @@ func (m Model) View() string {
 
         if m.activeCatIndex == i {
             style = ActiveTabStyle.Copy()
-
             if m.focus == FocusCategories {
+                // Bordure couleur cyan de l'onglet actif
                 style = style.BorderForeground(lipgloss.Color(ColorSecondary))
             } else {
-                style = style.BorderForeground(lipgloss.Color(ColorPrimary))
+                // Bordure couleur gris quand on fait "tab" pour aller dans les outils
+                style = style.BorderForeground(lipgloss.Color(ColorGray))
             }
         }
         tabs = append(tabs, style.Render(cat.Name))
@@ -202,7 +203,7 @@ func generateTitle() string {
     title := figure.String()
 
 	styledTitle := lipgloss.NewStyle().
-        Foreground(lipgloss.Color(ColorPink)).
+        Foreground(lipgloss.Color(ColorTertiary)).
         // Background(lipgloss.Color(ColorPrimary)).
         Bold(true).
         Render(title)

@@ -5,17 +5,29 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Palette
+// Palette Neon Theme
 const (
-	ColorPrimary   = "#500aff"
-	ColorSecondary = "#00f6ff"
-	ColorText      = "#FAFAFA"
-	ColorGray      = "#626262"
-	ColorPink      = "#FF2A6D"
-	ColorGreen     = "#39FF14"
-	ColorYellow    = "#FFE700"
-	ColorOrange    = "#ff5e00"
+	ColorPrimary   		= "#500aff"
+	ColorSecondary 		= "#00f6ff"
+	ColorText      		= "#FAFAFA"
+	ColorGray      		= "#626262"
+	ColorTertiary      	= "#FF2A6D"
+	ColorQuaternary     = "#39FF14"
+	ColorQuinary    	= "#FFE700"
+	ColorSenary    		= "#ff5e00"
 )
+
+// Palette Cyberpunk Theme
+// const (
+// 	ColorPrimary   		= "#FCEE0A" // Cyberpunk Yellow
+// 	ColorSecondary 		= "#00F0FF" // Holo Blue
+// 	ColorText      		= "#FAFAFA" // White
+// 	ColorGray      		= "#626262" // Gray
+// 	ColorTertiary      	= "#FF003C" // Glitch Red
+// 	ColorQuaternary     = "#39FF14" // Acid Green
+// 	ColorQuinary    	= "#FF00FF" // Hot Pink
+// 	ColorSenary    		= "#FF8C00" // Sunset Orange
+// )
 
 var (
 	// Style global pour centrer
@@ -28,7 +40,7 @@ var (
 			Padding(0, 3).
 			Margin(0, 1).
 			MarginTop(1).
-			Foreground(lipgloss.Color(ColorPink)).
+			Foreground(lipgloss.Color(ColorTertiary)).
 			Bold(true)
 
 	// Onglet inactif (plus sombre, couleur primaire)
@@ -50,7 +62,7 @@ var (
 
 	// Outil sélectionné
 	SelectedToolStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorPink)).
+				Foreground(lipgloss.Color(ColorTertiary)).
 				PaddingLeft(1).
 				Bold(true).
 				SetString("→") // Ajoute une flèche devant
@@ -68,9 +80,9 @@ var (
 
 	// Défini les couleurs de l'aide (en bas de la TUI)
 	HelpStyles = help.Styles{
-		ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorGreen)),
-		ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(ColorPink)),
-		FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(ColorGreen)),
-		FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorPink)),
+		ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorQuaternary)),
+		ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(ColorTertiary)),
+		FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(ColorQuaternary)),
+		FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(ColorTertiary)),
 	}
 )
