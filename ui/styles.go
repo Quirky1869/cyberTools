@@ -54,7 +54,7 @@ type Styles struct {
 	ToolName     lipgloss.Style
 	ToolDesc     lipgloss.Style
 	Help         help.Styles
-	Palette      ThemePalette 
+	Palette      ThemePalette
 }
 
 // 4. Le Générateur : Il fabrique les styles à partir d'une palette donnée

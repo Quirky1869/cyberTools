@@ -13,7 +13,7 @@ func main() {
 
 	// Activation de la souris et du mode AltScreen (Plein écran)
 	p := tea.NewProgram(
-		m, 
+		m,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(), // Permet de capturer les mouvements souris
 	)

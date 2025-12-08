@@ -4,14 +4,14 @@ import "github.com/charmbracelet/bubbles/key"
 
 // KeyMap définit toutes les touches utilisables
 type KeyMap struct {
-	Up    key.Binding
-	Down  key.Binding
-	Left  key.Binding
-	Right key.Binding
-	Tab   key.Binding
-	Enter key.Binding
-	Help  key.Binding
-	Quit  key.Binding
+	Up          key.Binding
+	Down        key.Binding
+	Left        key.Binding
+	Right       key.Binding
+	Tab         key.Binding
+	Enter       key.Binding
+	Help        key.Binding
+	Quit        key.Binding
 	ToggleTheme key.Binding
 }
 
@@ -52,15 +52,15 @@ var DefaultKeyMap = KeyMap{
 		key.WithHelp("tab", "changer section"),
 	),
 	ToggleTheme: key.NewBinding(
-	        key.WithKeys("t"),
-	        key.WithHelp("t", "changer thème"),
+		key.WithKeys("t"),
+		key.WithHelp("t", "changer thème"),
 	),
 	Enter: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "valider"),
 	),
 	Help: key.NewBinding(
-		key.WithKeys("?",","),
+		key.WithKeys("?", ","),
 		key.WithHelp("?", "aide"),
 	),
 	Quit: key.NewBinding(

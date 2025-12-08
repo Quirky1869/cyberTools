@@ -124,8 +124,8 @@ func (m Model) View() string {
 	}
 
 	// --- 0. Génération et centrage du titre ---
-// On envoie la palette actuelle (m.styles.Palette) à la fonction
-    titleArt := generateTitle(m.styles.Palette)
+	// On envoie la palette actuelle (m.styles.Palette) à la fonction
+	titleArt := generateTitle(m.styles.Palette)
 	centeredTitle := lipgloss.PlaceHorizontal(
 		m.width, // Largeur totale de l'écran
 		lipgloss.Center,
@@ -139,7 +139,7 @@ func (m Model) View() string {
 
 		if m.activeCatIndex == i {
 			// style = m.styles.ActiveTab.Copy()
-            style = m.styles.ActiveTab
+			style = m.styles.ActiveTab
 			if m.focus == FocusCategories {
 				// Bordure couleur cyan de l'onglet actif
 				style = style.BorderForeground(lipgloss.Color(m.styles.Palette.Secondary))
@@ -152,46 +152,46 @@ func (m Model) View() string {
 	}
 	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
-// 2. Contenu (Liste outils)
-    currentTools := m.categories[m.activeCatIndex].Tools
-    var toolList strings.Builder
+	// 2. Contenu (Liste outils)
+	currentTools := m.categories[m.activeCatIndex].Tools
+	var toolList strings.Builder
 
-    for i, tool := range currentTools {
-        // CORRECTION : On utilise m.styles...
-        style := m.styles.Tool
-        cursor := "  "
-        
-        if m.activeToolIndex == i {
-            style = m.styles.SelectedTool
-            // Le curseur est déjà géré par le SetString("→") dans le style, 
-            // mais si tu l'as ajouté manuellement ici, tu peux laisser ou ajuster.
-        }
-        
-        // CORRECTION : On utilise m.styles...
-        name := m.styles.ToolName.Render(tool.Name)
-        desc := m.styles.ToolDesc.Render("(" + tool.Description + ")")
-        
-        // Note: Assure-toi que ta concatenation est bonne selon ton style
-        toolList.WriteString(style.Render(cursor + name + " " + desc) + "\n")
-    }
+	for i, tool := range currentTools {
+		// CORRECTION : On utilise m.styles...
+		style := m.styles.Tool
+		cursor := "  "
 
-    const menuHeight = 15
+		if m.activeToolIndex == i {
+			style = m.styles.SelectedTool
+			// Le curseur est déjà géré par le SetString("→") dans le style,
+			// mais si tu l'as ajouté manuellement ici, tu peux laisser ou ajuster.
+		}
 
-    // --- Logique de couleur de la bordure (Dynamique) ---
-    // Par défaut (Gris ou Primary selon ton choix pour l'état inactif)
-    boxBorderColor := lipgloss.Color(m.styles.Palette.Primary)
+		// CORRECTION : On utilise m.styles...
+		name := m.styles.ToolName.Render(tool.Name)
+		desc := m.styles.ToolDesc.Render("(" + tool.Description + ")")
 
-    // Si le focus est sur les outils, on passe en couleur Secondaire (Cyan/Bleu)
-    if m.focus == FocusTools {
-        boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary)
-    }
+		// Note: Assure-toi que ta concatenation est bonne selon ton style
+		toolList.WriteString(style.Render(cursor+name+" "+desc) + "\n")
+	}
 
-    // Création de la boîte avec les styles dynamiques
-    contentBox := m.styles.Window. // <--- On utilise m.styles.Window
-        Width(max(lipgloss.Width(row), 60)).
-        Height(menuHeight).
-        BorderForeground(boxBorderColor). // <--- Couleur calculée juste au-dessus
-        Render(toolList.String())
+	const menuHeight = 15
+
+	// --- Logique de couleur de la bordure (Dynamique) ---
+	// Par défaut (Gris ou Primary selon ton choix pour l'état inactif)
+	boxBorderColor := lipgloss.Color(m.styles.Palette.Primary)
+
+	// Si le focus est sur les outils, on passe en couleur Secondaire (Cyan/Bleu)
+	if m.focus == FocusTools {
+		boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary)
+	}
+
+	// Création de la boîte avec les styles dynamiques
+	contentBox := m.styles.Window. // <--- On utilise m.styles.Window
+					Width(max(lipgloss.Width(row), 60)).
+					Height(menuHeight).
+					BorderForeground(boxBorderColor). // <--- Couleur calculée juste au-dessus
+					Render(toolList.String())
 
 	// 3. Section Aide
 	helpView := m.help.View(m.keys)
