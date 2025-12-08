@@ -12,6 +12,7 @@ type KeyMap struct {
 	Enter key.Binding
 	Help  key.Binding
 	Quit  key.Binding
+	ToggleTheme key.Binding
 }
 
 // ShortHelp renvoie les touches affichées tout le temps en bas
@@ -23,7 +24,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right}, // Navigation
-		{k.Tab, k.Enter},                // Actions
+		{k.ToggleTheme, k.Tab, k.Enter}, // Actions
 		{k.Help, k.Quit},                // Système
 	}
 }
@@ -49,6 +50,10 @@ var DefaultKeyMap = KeyMap{
 	Tab: key.NewBinding(
 		key.WithKeys("tab"),
 		key.WithHelp("tab", "changer section"),
+	),
+	ToggleTheme: key.NewBinding(
+	        key.WithKeys("t"),
+	        key.WithHelp("t", "changer thème"),
 	),
 	Enter: key.NewBinding(
 		key.WithKeys("enter"),
