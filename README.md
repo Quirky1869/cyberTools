@@ -1,6 +1,6 @@
 # cyberTools
 
-![](./_images/cyberTools.png)
+![](./_images/cyberTools.png)  
 
 ![Static Badge](https://img.shields.io/badge/TUI-cyberTools-cyan?style=plastic)
 ![Static Badge](https://img.shields.io/badge/License-MIT-8A2BE2?style=plastic)
@@ -25,15 +25,21 @@
 ├── cmd
 │   └── app
 │       └── main.go # Point d'entrée du programme  
-├── _images # Dossier d'assets
-├── README.md
 ├── tools
-│   └── tools.go
+│   └── definition.go
+│   └── tools1.go
+│   └── tools2.go
+│   └── tools3.go
+│   └── .........
 ├── ui
-│   ├── menu.go
+│   ├── keys.go
 │   ├── root.go
 │   └── styles.go
 ├── README.md  
+├── _images # Dossier d'assets
+├── README.md
+├── go.mod
+├── go.sum
 └── build.sh # Script pour compiler le projet
 ```
 
