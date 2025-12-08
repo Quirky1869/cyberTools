@@ -21,13 +21,10 @@ type Model struct {
 	categories      []tools.Category
 	activeCatIndex  int
 	activeToolIndex int
-	
 	focus           FocusState
-	
-	// Nouveaux champs pour l'aide
+	// Champs pour l'aide
 	keys            KeyMap
 	help            help.Model
-	
 	width           int
 	height          int
 }
