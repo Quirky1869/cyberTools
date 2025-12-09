@@ -5,7 +5,7 @@
 ![Static Badge](https://img.shields.io/badge/TUI-cyberTools-cyan?style=plastic)
 ![Static Badge](https://img.shields.io/badge/License-MIT-8A2BE2?style=plastic)
 [![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?style=plastic&logo=go)](https://golang.org/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Quirky1869/cyberTools)](https://goreportcard.com/report/github.com/Quirky1869/cyberTools)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Quirky1869/cyberTools?color=00F0FF)](https://goreportcard.com/report/github.com/Quirky1869/cyberTools)
 [![Latest Version](https://img.shields.io/github/v/release/Quirky1869/cyberTools?color=FF2A6D)](https://github.com/Quirky1869/cyberTools/releases)
 [![GitHub Actions](https://github.com/Quirky1869/cyberTools/actions/workflows/build-and-tests.yml/badge.svg)](https://github.com/Quirky1869/cyberTools/actions/workflows/build-and-tests.yml)
 
