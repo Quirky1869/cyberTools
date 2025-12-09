@@ -4,7 +4,7 @@ package tools
 type Tool struct {
 	Name        string
 	Description string
-	Action      func() // La fonction à lancer quand on clique dessus
+	Action      func() // Sera géré dans root.go
 }
 
 // Category regroupe des outils
@@ -13,7 +13,6 @@ type Category struct {
 	Tools []Tool
 }
 
-// MockData génère des fausses données pour tester l'UI
 func GetCategories() []Category {
 	return []Category{
 		{
@@ -24,10 +23,10 @@ func GetCategories() []Category {
 			},
 		},
 		{
-			Name: "Système",
+			Name: "Utilitaire",
 			Tools: []Tool{
+				{Name: "LogV", Description: "Visualiseur de logs"},
 				{Name: "Info CPU", Description: "Affiche l'usage CPU"},
-				{Name: "Disk Usage", Description: "Espace disque"},
 			},
 		},
 		{

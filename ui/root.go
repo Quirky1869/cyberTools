@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/Quirky1869/cyberTools/tools"
+	"github.com/Quirky1869/cyberTools/tools/logv" // Import de ton nouvel outil
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,30 +24,31 @@ type Model struct {
 	activeCatIndex  int
 	activeToolIndex int
 	focus           FocusState
-	// Champs pour l'aide
 	keys            KeyMap
 	help            help.Model
+	styles          Styles
 	width           int
 	height          int
-	styles          Styles
-	currentThemeStr string
+
+	// Champ pour stocker l'outil en cours d'exécution (nil si on est au menu)
+	currentTool tea.Model
 }
 
 func NewModel() Model {
-	// 1. On initialise les styles avec le thème Neon par défaut
+	// On initialise les styles avec le thème Neon par défaut
 	initialStyles := MakeStyles(NeonTheme)
 
-	// 2. On configure l'aide
+	// On configure l'aide avec les styles du thème
 	h := help.New()
 	h.Styles = initialStyles.Help
 
 	return Model{
-		categories:      tools.GetCategories(),
-		focus:           FocusCategories,
-		keys:            DefaultKeyMap,
-		help:            h,
-		styles:          initialStyles, // <--- On stocke les styles ici
-		currentThemeStr: "neon",
+		categories:  tools.GetCategories(),
+		focus:       FocusCategories,
+		keys:        DefaultKeyMap,
+		help:        h,
+		styles:      initialStyles,
+		currentTool: nil, // Pas d'outil au démarrage
 	}
 }
 
@@ -55,6 +57,25 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// ---------------------------------------------------------
+	// 1. GESTION DE L'OUTIL ACTIF (SI UN OUTIL EST LANCÉ)
+	// ---------------------------------------------------------
+	if m.currentTool != nil {
+		// On vérifie si l'outil envoie le signal de retour "BackMsg"
+		if _, ok := msg.(logv.BackMsg); ok {
+			m.currentTool = nil       // On ferme l'outil
+			return m, tea.ClearScreen // On nettoie l'écran pour réafficher le menu proprement
+		}
+
+		// Sinon, on transmet le message à l'outil pour qu'il le gère
+		var cmd tea.Cmd
+		m.currentTool, cmd = m.currentTool.Update(msg)
+		return m, cmd
+	}
+
+	// ---------------------------------------------------------
+	// 2. GESTION DU MENU PRINCIPAL (SI AUCUN OUTIL N'EST LANCÉ)
+	// ---------------------------------------------------------
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -64,26 +85,45 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
+		// --- Touches Système ---
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
+
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
+
+		// --- Changement de Thème (Touche 't') ---
+		case key.Matches(msg, m.keys.ToggleTheme):
+			// Bascule simple entre Neon et Cyberpunk
+			if m.styles.Palette.Primary == NeonTheme.Primary {
+				m.styles = MakeStyles(CyberpunkTheme)
+			} else {
+				m.styles = MakeStyles(NeonTheme)
+			}
+			// Important : On met à jour les styles de l'aide immédiatement
+			m.help.Styles = m.styles.Help
+
+		// --- Navigation Focus (Tab) ---
 		case key.Matches(msg, m.keys.Tab):
 			if m.focus == FocusCategories {
 				m.focus = FocusTools
 			} else {
 				m.focus = FocusCategories
 			}
+
+		// --- Navigation Gauche/Droite (Catégories) ---
 		case key.Matches(msg, m.keys.Left):
 			if m.focus == FocusCategories && m.activeCatIndex > 0 {
 				m.activeCatIndex--
-				m.activeToolIndex = 0
+				m.activeToolIndex = 0 // Reset de la sélection outil
 			}
 		case key.Matches(msg, m.keys.Right):
 			if m.focus == FocusCategories && m.activeCatIndex < len(m.categories)-1 {
 				m.activeCatIndex++
 				m.activeToolIndex = 0
 			}
+
+		// --- Navigation Haut/Bas (Outils) ---
 		case key.Matches(msg, m.keys.Up):
 			if m.focus == FocusTools && m.activeToolIndex > 0 {
 				m.activeToolIndex--
@@ -92,59 +132,63 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == FocusTools && m.activeToolIndex < len(m.categories[m.activeCatIndex].Tools)-1 {
 				m.activeToolIndex++
 			}
+
+		// --- Lancement d'un outil (Entrée) ---
 		case key.Matches(msg, m.keys.Enter):
 			if m.focus == FocusTools {
-				// Action à venir
+				// On récupère l'outil actuellement sélectionné
+				tool := m.categories[m.activeCatIndex].Tools[m.activeToolIndex]
+
+				// Si c'est "LogV", on initialise son modèle
+				if tool.Name == "LogV" {
+					lv := logv.New()
+					m.currentTool = lv
+					return m, lv.Init() // On lance la commande Init de LogV (ex: curseur qui clignote)
+				}
+				// (Ici tu pourras ajouter d'autres `if` pour tes futurs outils)
 			}
-			// ... dans le switch case tea.KeyMsg ...
-		case key.Matches(msg, m.keys.ToggleTheme):
-			// Logique de bascule
-			if m.currentThemeStr == "neon" {
-				m.styles = MakeStyles(CyberpunkTheme)
-				m.currentThemeStr = "cyberpunk"
-			} else {
-				m.styles = MakeStyles(NeonTheme)
-				m.currentThemeStr = "neon"
-			}
-			// Mettre à jour les styles de l'aide aussi
-			m.help.Styles = m.styles.Help
 		}
 	}
 
 	return m, nil
 }
 
-// --------------------------------------------------------------------------------
-// VIEW FUNCTION (RENDU VISUEL)
-// --------------------------------------------------------------------------------
-
 func (m Model) View() string {
+	// A. Si un outil est actif, on affiche SA vue à lui (plein écran)
+	if m.currentTool != nil {
+		return m.currentTool.View()
+	}
+
+	// B. Sinon, on affiche le MENU PRINCIPAL
 	if m.width == 0 {
 		return "loading..."
 	}
 
-	// --- 0. Génération et centrage du titre ---
-	// On envoie la palette actuelle (m.styles.Palette) à la fonction
+	// --- 0. Génération et centrage du titre (avec la palette dynamique) ---
 	titleArt := generateTitle(m.styles.Palette)
 	centeredTitle := lipgloss.PlaceHorizontal(
-		m.width, // Largeur totale de l'écran
+		m.width,
 		lipgloss.Center,
 		titleArt,
 	)
 
-	// 1. Navbar (Onglets)
+	// --- 1. Navbar (Onglets) ---
 	var tabs []string
 	for i, cat := range m.categories {
+		// Par défaut : Inactif
 		style := m.styles.InactiveTab
 
+		// Si c'est l'onglet courant
 		if m.activeCatIndex == i {
-			// style = m.styles.ActiveTab.Copy()
+			// On prend le style Actif
 			style = m.styles.ActiveTab
+
+			// Gestion fine de la bordure selon le Focus
 			if m.focus == FocusCategories {
-				// Bordure couleur cyan de l'onglet actif
+				// Focus sur les onglets -> Bordure Secondaire (Cyan)
 				style = style.BorderForeground(lipgloss.Color(m.styles.Palette.Secondary))
 			} else {
-				// Bordure couleur gris quand on fait "tab" pour aller dans les outils
+				// Focus ailleurs -> Bordure Grise
 				style = style.BorderForeground(lipgloss.Color(m.styles.Palette.Gray))
 			}
 		}
@@ -152,93 +196,74 @@ func (m Model) View() string {
 	}
 	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
-	// 2. Contenu (Liste outils)
+	// --- 2. Contenu (Liste outils) ---
 	currentTools := m.categories[m.activeCatIndex].Tools
 	var toolList strings.Builder
 
 	for i, tool := range currentTools {
-		// CORRECTION : On utilise m.styles...
 		style := m.styles.Tool
 		cursor := "  "
 
 		if m.activeToolIndex == i {
 			style = m.styles.SelectedTool
-			// Le curseur est déjà géré par le SetString("→") dans le style,
-			// mais si tu l'as ajouté manuellement ici, tu peux laisser ou ajuster.
+			// Note: le curseur est géré par SetString("→") dans MakeStyles,
+			// mais on garde l'espace ici pour l'alignement.
 		}
 
-		// CORRECTION : On utilise m.styles...
 		name := m.styles.ToolName.Render(tool.Name)
 		desc := m.styles.ToolDesc.Render("(" + tool.Description + ")")
-
-		// Note: Assure-toi que ta concatenation est bonne selon ton style
-		toolList.WriteString(style.Render(cursor+name+" "+desc) + "\n")
+		toolList.WriteString(style.Render(cursor + name + " " + desc) + "\n")
 	}
 
 	const menuHeight = 15
 
-	// --- Logique de couleur de la bordure (Dynamique) ---
-	// Par défaut (Gris ou Primary selon ton choix pour l'état inactif)
-	boxBorderColor := lipgloss.Color(m.styles.Palette.Primary)
-
-	// Si le focus est sur les outils, on passe en couleur Secondaire (Cyan/Bleu)
+	// Couleur de la bordure de la boîte
+	boxBorderColor := lipgloss.Color(m.styles.Palette.Primary) // Par défaut (Violet/Jaune)
 	if m.focus == FocusTools {
-		boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary)
+		boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary) // Si Focus (Cyan/Bleu)
 	}
 
-	// Création de la boîte avec les styles dynamiques
-	contentBox := m.styles.Window. // <--- On utilise m.styles.Window
-					Width(max(lipgloss.Width(row), 60)).
-					Height(menuHeight).
-					BorderForeground(boxBorderColor). // <--- Couleur calculée juste au-dessus
-					Render(toolList.String())
+	contentBox := m.styles.Window.
+		Width(max(lipgloss.Width(row), 60)).
+		Height(menuHeight).
+		BorderForeground(boxBorderColor).
+		Render(toolList.String())
 
-	// 3. Section Aide
+	// --- 3. Section Aide ---
 	helpView := m.help.View(m.keys)
 
-	// 4. Assemblage du contenu principal (Navbar + Box + Aide)
+	// --- 4. Assemblage Final ---
 	appContent := lipgloss.JoinVertical(lipgloss.Left, row, contentBox, "\n"+helpView)
 
-	// On centre l'application (navbar, contenu, aide)
 	centeredAppContent := lipgloss.PlaceHorizontal(
 		m.width,
 		lipgloss.Center,
 		appContent,
 	)
 
-	// 5. Assemblage final : Titre + Contenu Centré
 	finalUI := lipgloss.JoinVertical(
 		lipgloss.Left,
 		centeredTitle,
-		"\n", // Espace entre le titre et les onglets
+		"\n",
 		centeredAppContent,
 	)
 
-	// On centre le bloc final verticalement
 	return lipgloss.Place(
 		m.width,
 		m.height,
-		lipgloss.Center, // Centrage horizontal
-		lipgloss.Center, // Centrage vertical
+		lipgloss.Center,
+		lipgloss.Center,
 		finalUI,
 	)
 }
 
-//   ____________________  ______              __             ______            __
-//  /_  __/  _/_  __/ __ \/ ____/  _______  __/ /_  ___  ____/_  __/___  ____  / /____
-//   / /  / /  / / / /_/ / __/    / ___/ / / / __ \/ _ \/ ___// / / __ \/ __ \/ / ___/
-//  / / _/ /  / / / _, _/ /___   / /__/ /_/ / /_/ /  __/ /   / / / /_/ / /_/ / (__  )
-// /_/ /___/ /_/ /_/ |_/_____/   \___/\__, /_.___/\___/_/   /_/  \____/\____/_/____/
-//                                   /____/
-
-// generateTitle crée le titre "cyberTools" en ASCII Art stylisé
+// generateTitle crée le titre en ASCII Art avec la palette fournie
 func generateTitle(p ThemePalette) string {
 	figure := figure.NewFigure("cyberTools", "slant", true)
 	title := figure.String()
 
 	styledTitle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(p.Tertiary)).
-		// Background(lipgloss.Color(ColorPrimary)).
 		Bold(true).
 		Render(title)
 
