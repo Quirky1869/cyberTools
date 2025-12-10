@@ -141,11 +141,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// Si c'est "LogV", on initialise son modèle
 				if tool.Name == "LogV" {
-					lv := logv.New()
+					// IMPORTANT : On passe la taille de la fenêtre actuelle (m.width, m.height)
+					lv := logv.New(m.width, m.height)
 					m.currentTool = lv
-					return m, lv.Init() // On lance la commande Init de LogV (ex: curseur qui clignote)
+					return m, lv.Init()
 				}
-				// (Ici tu pourras ajouter d'autres `if` pour tes futurs outils)
 			}
 		}
 	}
@@ -164,7 +164,7 @@ func (m Model) View() string {
 		return "loading..."
 	}
 
-	// --- 0. Génération et centrage du titre (avec la palette dynamique) ---
+	// --- 0. Génération et centrage du titre ---
 	titleArt := generateTitle(m.styles.Palette)
 	centeredTitle := lipgloss.PlaceHorizontal(
 		m.width,
@@ -206,8 +206,6 @@ func (m Model) View() string {
 
 		if m.activeToolIndex == i {
 			style = m.styles.SelectedTool
-			// Note: le curseur est géré par SetString("→") dans MakeStyles,
-			// mais on garde l'espace ici pour l'alignement.
 		}
 
 		name := m.styles.ToolName.Render(tool.Name)
