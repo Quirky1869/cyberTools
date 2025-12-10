@@ -1,0 +1,54 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.0'
+
+      - name: Build
+        run: go build -v -o bin/cyberTools ./...
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Stocker le binaire pour la Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberTools-binary
+          path: bin/cyberTools
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger le binaire
+        uses: actions/download-artifact@v4
+        with:
+          name: cyberTools-binary
+          path: bin
+
+      - name: Créer la Release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          name: cyberTools_${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          
+          files: bin/cyberTools
+          
+          body: |
+            Nouvelle version disponible !
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
