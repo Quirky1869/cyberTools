@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Ne se déclenche QUE si tu pousses un tag (ex: git push origin v0.2)
-  workflow_dispatch: # Permet de le lancer manuellement si besoin
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -49,6 +49,6 @@ jobs:
           tag_name: ${{ github.ref }}
           files: bin/cyberTools
           body: |
-            Nouvelle version compilée via GitHub Actions.
+            Nouvelle version compilée automatiquement.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
