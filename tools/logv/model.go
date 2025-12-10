@@ -153,7 +153,7 @@ func (m Model) View() string {
 	switch m.state {
 	case StateChooseMethod:
 		return fmt.Sprintf(
-			"\n  %s\n\n  [T] Choisir depuis le Terminal\n  [G] Choisir depuis une vue Graphique\n\n  [Q] Retour Menu",
+			"\n  %s\n\n  [t] Choisir depuis le Terminal\n  [g] Choisir depuis une vue Graphique\n\n  [q] Retour Menu",
 			titleStyle.Render("LogV - Importation"),
 		)
 
