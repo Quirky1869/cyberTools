@@ -63,8 +63,15 @@ La TUI `cyberTools` faite en [Go](https://go.dev) permet de lancés plusieurs ou
 ## Lancement de la TUI
 
 > [!TIP]  
+### Via les releases
+Vous pouvez exécuter le binaire en téléchargeant les [releases](https://github.com/Quirky1869/cyberTools/releases)  
+
+### En buildant le projet
 Après avoir fait un `git clone https://github.com/Quirky1869/cyberTools.git` et `cd cyberTools`  
-Vous pouvez lancer la TUI via le binaire dans `./bin` ou lancer la commande `go run cmd/app/main.go`  
+Vous pouvez compiler le projet en exécutant le fichier `./build.sh` puis lancer le projet compiler via`./bin/cyberTools` 
+
+### En exécutant directement le projet
+Vous pouvez aussi lancer la commande `go run cmd/app/main.go` (Go doit être installer sur votre PC)  
 
 ![gif](_images/gif/cyberTools.gif)
 
