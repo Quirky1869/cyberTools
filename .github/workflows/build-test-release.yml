@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*' # Ne se déclenche QUE si tu pousses un tag (ex: git push origin v0.2)
+  workflow_dispatch: # Permet de le lancer manuellement si besoin
 
 jobs:
   build:
@@ -17,8 +17,10 @@ jobs:
         with:
           go-version: '1.24.0'
 
-      - name: Build
-        run: go build -v -o bin/cyberTools ./...
+      - name: Build avec le script
+        run: |
+          chmod +x build.sh
+          ./build.sh
 
       - name: Test
         run: go test -v ./...
@@ -45,10 +47,8 @@ jobs:
         with:
           name: cyberTools_${{ github.ref_name }}
           tag_name: ${{ github.ref }}
-          
           files: bin/cyberTools
-          
           body: |
-            Nouvelle version disponible !
+            Nouvelle version compilée via GitHub Actions.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
