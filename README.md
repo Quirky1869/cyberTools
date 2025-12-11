@@ -62,7 +62,8 @@ La TUI `cyberTools` faite en [Go](https://go.dev) permet de lancés plusieurs ou
 
 ## Lancement de la TUI
 
-> [!TIP]  
+>[!TIP]  
+Vous pouvez lancer la TUI de 3 manières différentes  
 ### Via les releases
 Vous pouvez exécuter le binaire en téléchargeant les [releases](https://github.com/Quirky1869/cyberTools/releases)  
 ### En buildant le projet
