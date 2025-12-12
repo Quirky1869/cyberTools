@@ -16,10 +16,9 @@ type Category struct {
 func GetCategories() []Category {
 	return []Category{
 		{
-			Name: "Réseau",
+			Name: "BDD",
 			Tools: []Tool{
-				{Name: "Ping Test", Description: "Ping une IP"},
-				{Name: "Port Scan", Description: "Scan les ports ouverts"},
+				{Name: "SqlTUI", Description: "Explorateur SQL"},
 			},
 		},
 		{
@@ -30,10 +29,11 @@ func GetCategories() []Category {
 			},
 		},
 		{
-			Name: "Crypto",
+			Name: "Data",
 			Tools: []Tool{
-				{Name: "Hash Generator", Description: "MD5/SHA256"},
+				{Name: "TreeYamlV", Description: ""},
 			},
 		},
 	}
 }
+

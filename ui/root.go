@@ -4,12 +4,13 @@ import (
 	"strings"
 
 	"github.com/Quirky1869/cyberTools/tools"
-	"github.com/Quirky1869/cyberTools/tools/logv" // Import de ton nouvel outil
+	"github.com/Quirky1869/cyberTools/tools/logv"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	figure "github.com/common-nighthawk/go-figure"
+	"github.com/Quirky1869/cyberTools/tools/sqltui"
 )
 
 type FocusState int
@@ -65,6 +66,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if _, ok := msg.(logv.BackMsg); ok {
 			m.currentTool = nil       // On ferme l'outil
 			return m, tea.ClearScreen // On nettoie l'écran pour réafficher le menu proprement
+		}
+
+		if _, ok := msg.(sqltui.BackMsg); ok {
+			m.currentTool = nil
+			return m, tea.ClearScreen
 		}
 
 		// Sinon, on transmet le message à l'outil pour qu'il le gère
@@ -145,6 +151,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					lv := logv.New(m.width, m.height)
 					m.currentTool = lv
 					return m, lv.Init()
+				}
+
+				if tool.Name == "SqlTUI" {
+					st := sqltui.New(m.width, m.height)
+					m.currentTool = st
+					return m, st.Init()
 				}
 			}
 		}
