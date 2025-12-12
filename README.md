@@ -21,7 +21,7 @@ CyberTools est une interface utilisateur textuelle (TUI) immersive et modulaire 
 Construite avec l'écosystème Charm (Bubble Tea, Lipgloss), cette TUI met l'accent sur l'ergonomie :
 
 - Navigation Fluide : Interface entièrement pilotable au clavier (flèches, tab et des touches Vim h/j/k/l).  
-- Organisation par Onglets : Système de catégories ([...], [...], [...], etc.) pour classer proprement les outils.  
+- Organisation par Onglets : Système de catégories ([BDD], [Utilitaire], [DATA], etc.) pour classer proprement les outils.  
 - Design Cyberpunk : Une identité visuelle forte avec titre ASCII Art, effets de focus lumineux et bordures stylisées.  
 - Thèmes Dynamiques : Possibilité de changer l'ambiance visuelle à la volée (ex: thème Neon vs Cyberpunk) sans redémarrer le programme (t).  
 - Aide Contextuelle : Barre d'aide interactive qui s'adapte selon la section active.  
