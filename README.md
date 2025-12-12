@@ -8,6 +8,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Quirky1869/cyberTools?color=00F0FF)](https://goreportcard.com/report/github.com/Quirky1869/cyberTools)
 [![Latest Version](https://img.shields.io/github/v/release/Quirky1869/cyberTools?color=FF2A6D)](https://github.com/Quirky1869/cyberTools/releases)
 [![GitHub Actions](https://github.com/Quirky1869/cyberTools/actions/workflows/build-and-tests.yml/badge.svg)](https://github.com/Quirky1869/cyberTools/actions/workflows/build-and-tests.yml)
+[![GitHub Actions Release](https://github.com/Quirky1869/cyberTools/actions/workflows/build-test-release.yml/badge.svg)](https://github.com/Quirky1869/cyberTools/actions/workflows/build-test-release.yml)
 
 ## Résumé
 <p align="center">  
