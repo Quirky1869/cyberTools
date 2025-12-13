@@ -5,12 +5,13 @@ import (
 
 	"github.com/Quirky1869/cyberTools/tools"
 	"github.com/Quirky1869/cyberTools/tools/logv"
+	"github.com/Quirky1869/cyberTools/tools/sqltui"
+	"github.com/Quirky1869/cyberTools/tools/structViewer"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	figure "github.com/common-nighthawk/go-figure"
-	"github.com/Quirky1869/cyberTools/tools/sqltui"
 )
 
 type FocusState int
@@ -69,6 +70,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if _, ok := msg.(sqltui.BackMsg); ok {
+			m.currentTool = nil
+			return m, tea.ClearScreen
+		}
+
+		if _, ok := msg.(structviewer.BackMsg); ok {
 			m.currentTool = nil
 			return m, tea.ClearScreen
 		}
@@ -158,6 +164,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.currentTool = st
 					return m, st.Init()
 				}
+
+				if tool.Name == "structViewer" {
+					ty := structviewer.New(m.width, m.height)
+					m.currentTool = ty
+					return m, ty.Init()
+				}
 			}
 		}
 	}
@@ -222,7 +234,7 @@ func (m Model) View() string {
 
 		name := m.styles.ToolName.Render(tool.Name)
 		desc := m.styles.ToolDesc.Render("(" + tool.Description + ")")
-		toolList.WriteString(style.Render(cursor + name + " " + desc) + "\n")
+		toolList.WriteString(style.Render(cursor+name+" "+desc) + "\n")
 	}
 
 	const menuHeight = 15

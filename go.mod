@@ -9,6 +9,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/ncruces/zenity v0.10.14
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

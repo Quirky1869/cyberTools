@@ -44,6 +44,10 @@ var (
 	titleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
 	borderStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#500aff"))
 	focusStyle  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#00f6ff"))
+
+	// AJOUTS POUR L'HARMONISATION UX
+	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))            // Gris pour l'aide
+	pathStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true) // Cyan pour le chemin
 )
 
 type Model struct {
@@ -61,10 +65,23 @@ type Model struct {
 
 func New(w, h int) Model {
 	fp := filepicker.New()
-	// RETOUR AUX SOURCES : On accepte uniquement les fichiers binaires SQLite
 	fp.AllowedTypes = []string{".db", ".sqlite", ".sqlite3", ".db3"}
 	fp.CurrentDirectory, _ = os.Getwd()
-	fp.Height = h - 5
+
+	// --- PERSONNALISATION DES COULEURS (Comme les autres outils) ---
+	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))              // Rose
+	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Rose Gras
+	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))           // Cyan
+	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))                // Blanc
+	// -------------------------------------------------------------
+
+	// Ajustement hauteur pour header/footer
+	fpHeight := h - 8
+	if fpHeight < 5 {
+		fpHeight = 5
+	}
+	fp.Height = fpHeight
+	fp.ShowHidden = false
 
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 30, h-5)
 	l.Title = "Tables"
@@ -105,14 +122,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.filePicker.Height = msg.Height - 5
+		m.filePicker.Height = msg.Height - 8 // Ajustement hauteur
 		m.list.SetHeight(msg.Height - 5)
 		m.table.SetHeight(msg.Height - 8)
 
 	case tea.KeyMsg:
-		if m.state == StateSelectFile && msg.String() == "q" {
-			return m, func() tea.Msg { return BackMsg{} }
+		if m.state == StateSelectFile {
+			switch msg.String() {
+			case "q":
+				return m, func() tea.Msg { return BackMsg{} }
+			case "h": // Toggle fichiers cachés
+				m.filePicker.ShowHidden = !m.filePicker.ShowHidden
+				return m, m.filePicker.Init()
+			}
 		}
+
 		if m.state == StateBrowser && msg.String() == "ctrl+c" {
 			if m.db != nil {
 				m.db.Close()
@@ -181,10 +205,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	// --- VUE 1 : SELECTEUR DE FICHIER (mise à jour UX) ---
 	if m.state == StateSelectFile {
-		return fmt.Sprintf("\n  %s\n\n%s", titleStyle.Render("SqlTUI - Ouvrir une base de données"), m.filePicker.View())
+		// 1. Titre
+		title := titleStyle.Render("SqlTUI - Ouvrir une base de données")
+
+		// 2. Chemin actuel (PWD)
+		currentDir := fmt.Sprintf(" %s", pathStyle.Render(m.filePicker.CurrentDirectory))
+
+		// 3. Contenu Picker
+		content := "\n" + m.filePicker.View()
+
+		// 4. Pied de page : Aide
+		hiddenStatus := "off"
+		if m.filePicker.ShowHidden {
+			hiddenStatus = "ON"
+		}
+		helpText := fmt.Sprintf("↑/↓: naviguer • enter: ouvrir • h: cachés(%s) • q: retour", hiddenStatus)
+		footer := helpStyle.Render("\n" + helpText)
+
+		return fmt.Sprintf("\n  %s\n\n  %s%s%s", title, currentDir, content, footer)
 	}
 
+	// --- VUE 2 : NAVIGATEUR BDD ---
 	if m.state == StateBrowser {
 		header := titleStyle.Render(fmt.Sprintf(" BDD: %s ", m.dbPath))
 
@@ -212,7 +255,7 @@ func (m Model) View() string {
 
 		tableView := tableStyle.
 			Width(safeTableWidth).
-			MaxWidth(safeTableWidth).
+			MaxWidth(safeTableWidth). // Sécurité max width
 			Height(m.height - 4).
 			Render(lipgloss.JoinVertical(lipgloss.Left,
 				lipgloss.NewStyle().Bold(true).Render(tableInfo),

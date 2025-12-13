@@ -28,13 +28,13 @@ const (
 // Styles locaux
 var (
 	titleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Pink
-	errorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000")).Bold(true) // Rouge
+	errorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true) // Rouge
 	warnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFA500")).Bold(true) // Orange
 	infoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))            // Cyan
 	
 	// Nouveaux styles pour le File Picker
-	grayStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))            // Gris pour l'aide
-	pathStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff")).Bold(true) // Cyan pour le chemin
+	helpStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
+	pathStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
 )
 
 type Model struct {
@@ -63,6 +63,14 @@ func New(w, h int) Model {
 	fp := filepicker.New()
 	fp.AllowedTypes = []string{".log", ".txt", ".go", ".md", ".json", ".yaml", ".conf"}
 	fp.CurrentDirectory, _ = os.Getwd()
+// --- AJOUT : PERSONNALISATION DES COULEURS ---
+    // C'est ici qu'on change les couleurs de la liste des fichiers
+    fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))      // Curseur Rose (>)
+    fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Texte sélectionné Rose
+    fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))   // Dossiers Cyan
+    fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))        // Fichiers Blanc
+    // ---------------------------------------------
+
 	fp.Height = h - 8 // On réduit un peu pour laisser la place au header/footer
 	fp.ShowHidden = false 
 
@@ -243,8 +251,10 @@ func (m Model) View() string {
 		)
 
 	case StatePickingFile:
-		// 1. En-tête : Chemin actuel (PWD)
-		currentDir := fmt.Sprintf("%s", pathStyle.Render(m.filePicker.CurrentDirectory))
+		title := titleStyle.Render("LogV - Ouvrir un fichier")
+		
+		// En-tête : Chemin actuel (PWD)
+		currentDir := fmt.Sprintf(" %s", pathStyle.Render(m.filePicker.CurrentDirectory))
 		
 		// 2. Gestion de l'affichage Input ou Picker
 		var content string
@@ -267,9 +277,9 @@ func (m Model) View() string {
 			helpText = fmt.Sprintf("↑/↓/←/→: naviguer • enter: ouvrir • h: cachés(%s) • ctrl+l: chemin • esc: retour", hiddenStatus)
 		}
 		
-		footer := grayStyle.Render("\n" + helpText)
+		footer := helpStyle.Render("\n" + helpText)
 
-		return currentDir + content + footer
+		return fmt.Sprintf("\n  %s\n\n  %s%s%s", title, currentDir, content, footer)
 
 	case StateViewing:
 		header := titleStyle.Render("LogV: " + m.selectedFile)

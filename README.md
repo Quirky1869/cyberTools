@@ -3,7 +3,7 @@
 ![](./_images/cyberTools.png)  
 
 ![Static Badge](https://img.shields.io/badge/TUI-cyberTools-cyan?style=plastic)
-![Static Badge](https://img.shields.io/badge/License-MIT-8A2BE2?style=plastic)
+![Static Badge](https://img.shields.io/badge/License-MIT-500aff?style=plastic)
 [![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?style=plastic&logo=go)](https://golang.org/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Quirky1869/cyberTools?color=00F0FF)](https://goreportcard.com/report/github.com/Quirky1869/cyberTools)
 [![Latest Version](https://img.shields.io/github/v/release/Quirky1869/cyberTools?color=FF2A6D)](https://github.com/Quirky1869/cyberTools/releases)
@@ -46,7 +46,7 @@ La TUI `cyberTools` faite en [Go](https://go.dev) permet de lancés plusieurs ou
 │   │   └── model.go
 │   ├── sqltui
 │   │   └── model.go
-│   ├── treeyamlv
+│   ├── structViewer
 │   │   └── model.go
 │   └── aed
 │       └── model.go
@@ -69,9 +69,9 @@ Vous pouvez lancer la TUI de 3 manières différentes
 Vous pouvez exécuter le binaire en téléchargeant les [releases](https://github.com/Quirky1869/cyberTools/releases)  
 ### En buildant le projet
 Après avoir fait un `git clone https://github.com/Quirky1869/cyberTools.git` et `cd cyberTools`  
-Vous pouvez compiler le projet en exécutant le fichier `./build.sh` puis lancer le projet compiler via`./bin/cyberTools` 
+Vous pouvez compiler le projet en exécutant le fichier `./build.sh` puis lancer le projet compiler via`./bin/cyberTools` (Go doit être installé sur votre PC)  
 ### En exécutant directement le projet
-Vous pouvez aussi lancer la commande `go run cmd/app/main.go` (Go doit être installer sur votre PC)  
+Vous pouvez aussi lancer la commande `go run cmd/app/main.go` (Go doit être installé sur votre PC)  
 
 ![gif](_images/gif/cyberTools.gif)
 

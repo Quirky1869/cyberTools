@@ -25,15 +25,14 @@ func GetCategories() []Category {
 			Name: "Utilitaire",
 			Tools: []Tool{
 				{Name: "LogV", Description: "Visualiseur de logs"},
-				{Name: "Info CPU", Description: "Affiche l'usage CPU"},
+				{Name: "structViewer", Description: "Lecteur YAML/JSON arborescent"},
 			},
 		},
 		{
 			Name: "Data",
 			Tools: []Tool{
-				{Name: "TreeYamlV", Description: ""},
+				{Name: "AED", Description: "Analyseur d'espace disque"},
 			},
 		},
 	}
 }
-
