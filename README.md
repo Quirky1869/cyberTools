@@ -38,27 +38,25 @@ La TUI `cyberTools` faite en [Go](https://go.dev) permet de lancés plusieurs ou
 ├── cmd
 │   └── app
 │       └── main.go # Point d'entrée du programme  
-├── bin
-│    └──cyberTools
 ├── tools
-│   ├── definition.go
+│   ├── definition.go # Définition de la liste des outils disponibles (catégories et noms)
 │   ├── logv
-│   │   └── model.go
+│   │   └── model.go  # Visualiseur de Logs avec coloration syntaxique
 │   ├── sqltui
-│   │   └── model.go
+│   │   └── model.go  # Explorateur de bases de données SQLite en TUI
 │   ├── structViewer
-│   │   └── model.go
+│   │   └── model.go  # Explorateur YAML/JSON en vue arborescente
 │   └── aed
-│       └── model.go
+│       └── model.go  # Analyseur d'Espace Disque
 ├── ui
-│   ├── keys.go
-│   ├── root.go
-│   └── styles.go
+│   ├── keys.go   # Définition et gestion des combinaisons de touches globales
+│   ├── root.go   # Logique principale du menu. Gère les différents états de l'application
+│   └── styles.go # Définition des styles Lipgloss
 ├── README.md  
-├── _images # Dossier d'assets
+├── _images     # Dossier des assets
 ├── go.mod
 ├── go.sum
-└── build.sh # Script pour compiler le projet
+└── build.sh    # Script Bash pour la compilation du binaire cyberTools.
 ```
 
 ## Lancement de la TUI
@@ -68,10 +66,14 @@ Vous pouvez lancer la TUI de 3 manières différentes
 ### Via les releases
 Vous pouvez exécuter le binaire en téléchargeant les [releases](https://github.com/Quirky1869/cyberTools/releases)  
 ### En buildant le projet
+>[!CAUTION]
+Go doit être [installé](https://go.dev/doc/install) sur votre PC  
 Après avoir fait un `git clone https://github.com/Quirky1869/cyberTools.git` et `cd cyberTools`  
 Vous pouvez compiler le projet en exécutant le fichier `./build.sh` puis lancer le projet compiler via`./bin/cyberTools` (Go doit être installé sur votre PC)  
 ### En exécutant directement le projet
-Vous pouvez aussi lancer la commande `go run cmd/app/main.go` (Go doit être installé sur votre PC)  
+>[!CAUTION]
+Go doit être [installé](https://go.dev/doc/install) sur votre PC  
+Vous pouvez aussi lancer la commande `go run cmd/app/main.go`    
 
 ![gif](_images/gif/cyberTools.gif)
 

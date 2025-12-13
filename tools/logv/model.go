@@ -326,7 +326,7 @@ func (m *Model) applyFilter() {
 		coloredLine := line
 		
 		// ERREURS
-		if strings.Contains(lineUpper, "ERROR") || strings.Contains(lineUpper, "FAIL") || strings.Contains(lineUpper, "CRITICAL") || strings.Contains(lineUpper, "FATAL") {
+		if strings.Contains(lineUpper, "ERROR") || strings.Contains(lineUpper, "FAIL") || strings.Contains(lineUpper, "CRIT") || strings.Contains(lineUpper, "FATAL") {
 			coloredLine = errorStyle.Render(line)
 		// WARNINGS
 		} else if strings.Contains(lineUpper, "WARN") { 

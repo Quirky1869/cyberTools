@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	figure "github.com/common-nighthawk/go-figure"
+	"github.com/Quirky1869/cyberTools/tools/aed"
 )
 
 type FocusState int
@@ -78,6 +79,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentTool = nil
 			return m, tea.ClearScreen
 		}
+
+		if _, ok := msg.(aed.BackMsg); ok {
+    	m.currentTool = nil
+    	return m, tea.ClearScreen
+}
 
 		// Sinon, on transmet le message à l'outil pour qu'il le gère
 		var cmd tea.Cmd
@@ -169,6 +175,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					ty := structviewer.New(m.width, m.height)
 					m.currentTool = ty
 					return m, ty.Init()
+				}
+
+				if tool.Name == "AED" {
+    				a := aed.New(m.width, m.height)
+    				m.currentTool = a
+    				return m, a.Init()
 				}
 			}
 		}

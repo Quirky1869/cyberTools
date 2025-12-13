@@ -1,13 +1,11 @@
 package tools
 
-// Tool représente un outil individuel
 type Tool struct {
 	Name        string
 	Description string
-	Action      func() // Sera géré dans root.go
+	Action      func()
 }
 
-// Category regroupe des outils
 type Category struct {
 	Name  string
 	Tools []Tool
