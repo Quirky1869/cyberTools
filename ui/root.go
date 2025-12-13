@@ -4,15 +4,18 @@ import (
 	"strings"
 
 	"github.com/Quirky1869/cyberTools/tools"
+	"github.com/Quirky1869/cyberTools/tools/aed"
 	"github.com/Quirky1869/cyberTools/tools/logv"
 	"github.com/Quirky1869/cyberTools/tools/sqltui"
-	"github.com/Quirky1869/cyberTools/tools/structViewer"
+
+	// J'ajoute un alias explicite "structviewer" pour éviter les soucis majuscule/minuscule
+	structviewer "github.com/Quirky1869/cyberTools/tools/structViewer"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	figure "github.com/common-nighthawk/go-figure"
-	"github.com/Quirky1869/cyberTools/tools/aed"
 )
 
 type FocusState int
@@ -81,9 +84,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if _, ok := msg.(aed.BackMsg); ok {
-    	m.currentTool = nil
-    	return m, tea.ClearScreen
-}
+			m.currentTool = nil
+			return m, tea.ClearScreen
+		}
 
 		// Sinon, on transmet le message à l'outil pour qu'il le gère
 		var cmd tea.Cmd
@@ -178,9 +181,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if tool.Name == "AED" {
-    				a := aed.New(m.width, m.height)
-    				m.currentTool = a
-    				return m, a.Init()
+					a := aed.New(m.width, m.height)
+					m.currentTool = a
+					return m, a.Init()
 				}
 			}
 		}
@@ -201,7 +204,10 @@ func (m Model) View() string {
 	}
 
 	// --- 0. Génération et centrage du titre ---
-	titleArt := generateTitle(m.styles.Palette)
+	// MODIFICATION ICI : On utilise directement le style m.styles.Title (Orange/Senary)
+	titleRaw := figure.NewFigure("cyberTools", "slant", true).String()
+	titleArt := m.styles.Title.Render(titleRaw)
+
 	centeredTitle := lipgloss.PlaceHorizontal(
 		m.width,
 		lipgloss.Center,
@@ -291,18 +297,7 @@ func (m Model) View() string {
 	)
 }
 
-// generateTitle crée le titre en ASCII Art avec la palette fournie
-func generateTitle(p ThemePalette) string {
-	figure := figure.NewFigure("cyberTools", "slant", true)
-	title := figure.String()
-
-	styledTitle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(p.Tertiary)).
-		Bold(true).
-		Render(title)
-
-	return styledTitle
-}
+// NOTE : J'ai supprimé la fonction generateTitle car elle n'est plus nécessaire.
 
 func max(a, b int) int {
 	if a > b {

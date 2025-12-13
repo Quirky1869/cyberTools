@@ -15,37 +15,40 @@ type ThemePalette struct {
 	Quaternary string
 	Quinary    string
 	Senary     string
+	Septenary  string
 }
 
 // 2. Définition des thèmes disponibles
 var (
 	NeonTheme = ThemePalette{
-		Primary:    "#500aff",
-		Secondary:  "#00f6ff",
-		Text:       "#FAFAFA",
-		Gray:       "#626262",
-		Tertiary:   "#FF2A6D",
-		Quaternary: "#39FF14",
-		Quinary:    "#FFE700",
-		Senary:     "#ff5e00",
+		Primary:    "#626262", // Bordures inactives
+		Secondary:  "#00f6ff", // Bordure Focus Onglet
+		Text:       "#FAFAFA", // Texte principal
+		Gray:       "#626262", // Descriptions outils (inactifs)
+		Tertiary:   "#FF2A6D", // Onglet Actif (Catégorie sélectionnée)
+		Quaternary: "#FF2A6D", // Outil Sélectionné (Flèche et Nom)
+		Quinary:    "#FF2A6D", // Description des touches d'aide (Footer)
+		Senary:     "#FF2A6D", // Titre ASCII Art
+		Septenary:  "#39FF14", // Touches Aide (Footer)
 	}
 
 	CyberpunkTheme = ThemePalette{
-		Primary:    "#FCEE0A", // Jaune
-		Secondary:  "#00F0FF", // Bleu Holo
-		Text:       "#FAFAFA",
-		Gray:       "#626262",
-		Tertiary:   "#FF003C", // Rouge Glitch
-		Quaternary: "#39FF14", // Vert Acide
-		Quinary:    "#FF00FF", // Rose Hot
-		Senary:     "#FF8C00", // Orange
+		Primary:    "#FCEE0A", // Bordures inactives
+		Secondary:  "#00F0FF", // Bordure Focus Onglet
+		Text:       "#FAFAFA", // Texte principal
+		Gray:       "#626262", // Descriptions outils (inactifs)
+		Tertiary:   "#FF00FF", // 1. Onglet Actif
+		Quaternary: "#39FF14", // 2. Outil Sélectionné
+		Quinary:    "#FCEE0A", // 3. Description des touches d'aide (J'ai mis Jaune pour contraster)
+		Senary:     "#00F0FF", // Titre ASCII Art
+		Septenary:  "#39FF14", // Touches Aide
 	}
 )
 
 // 3. Structure regroupant tous tes styles Lipgloss
-// Au lieu de variables globales, on les met dans une boîte
 type Styles struct {
 	Doc          lipgloss.Style
+	Title        lipgloss.Style
 	ActiveTab    lipgloss.Style
 	InactiveTab  lipgloss.Style
 	Window       lipgloss.Style
@@ -64,9 +67,15 @@ func MakeStyles(t ThemePalette) Styles {
 
 		Doc: lipgloss.NewStyle().Padding(1, 2),
 
+		// Titre ASCII -> Senary
+		Title: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Senary)).
+			Bold(true),
+
+		// 1. Catégories actives -> Tertiary
 		ActiveTab: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(t.Secondary)).
+			BorderForeground(lipgloss.Color(t.Tertiary)).
 			Padding(0, 3).
 			Margin(0, 1).
 			MarginTop(1).
@@ -85,8 +94,9 @@ func MakeStyles(t ThemePalette) Styles {
 			Padding(1, 2).
 			Align(lipgloss.Left),
 
+		// 2. Outil Sélectionné -> Quaternary
 		SelectedTool: lipgloss.NewStyle().
-			Foreground(lipgloss.Color(t.Tertiary)).
+			Foreground(lipgloss.Color(t.Quaternary)). // Modification ici
 			PaddingLeft(1).
 			Bold(true).
 			SetString("→"),
@@ -99,11 +109,15 @@ func MakeStyles(t ThemePalette) Styles {
 
 		ToolDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Gray)),
 
+		// Styles de l'aide en bas
 		Help: help.Styles{
-			ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quaternary)),
-			ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Tertiary)),
-			FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quaternary)),
-			FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Tertiary)),
+			// Touches -> Septenary
+			ShortKey: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
+			FullKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
+
+			// 3. Descriptions Aide -> Quinary
+			ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)), // Modification ici
+			FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)), // Modification ici
 		},
 	}
 }
