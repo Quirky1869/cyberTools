@@ -37,9 +37,9 @@ var (
 		Secondary:  "#00F0FF", // Bordure Focus Onglet
 		Text:       "#FAFAFA", // Texte principal
 		Gray:       "#626262", // Descriptions outils (inactifs)
-		Tertiary:   "#FF00FF", // 1. Onglet Actif
-		Quaternary: "#39FF14", // 2. Outil Sélectionné
-		Quinary:    "#FCEE0A", // 3. Description des touches d'aide (J'ai mis Jaune pour contraster)
+		Tertiary:   "#FF2A6D", // Onglet Actif
+		Quaternary: "#ffa600ff", // Outil Sélectionné
+		Quinary:    "#FF2A6D", // Description des touches d'aide
 		Senary:     "#00F0FF", // Titre ASCII Art
 		Septenary:  "#39FF14", // Touches Aide
 	}
