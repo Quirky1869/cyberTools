@@ -68,11 +68,13 @@ Vous pouvez exécuter le binaire en téléchargeant les [releases](https://githu
 ### En buildant le projet
 >[!CAUTION]
 Go doit être [installé](https://go.dev/doc/install) sur votre PC  
+
 Après avoir fait un `git clone https://github.com/Quirky1869/cyberTools.git` et `cd cyberTools`  
 Vous pouvez compiler le projet en exécutant le fichier `./build.sh` puis lancer le projet compiler via`./bin/cyberTools` (Go doit être installé sur votre PC)  
 ### En exécutant directement le projet
 >[!CAUTION]
 Go doit être [installé](https://go.dev/doc/install) sur votre PC  
+
 Vous pouvez aussi lancer la commande `go run cmd/app/main.go`    
 
 ![gif](_images/gif/cyberTools.gif)
