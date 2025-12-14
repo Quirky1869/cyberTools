@@ -89,7 +89,7 @@ Les [releases](https://github.com/Quirky1869/cyberTools/releases) sont disponibl
 | ------------------------------------------------------------ | ------------------------------------ |
 | [Bubble Tea](https://github.com/charmbracelet/bubbletea)     | Gestion de l’interface TUI           |
 | [Lipgloss](https://github.com/charmbracelet/lipgloss)        | Stylisation du texte et des bordures |
-| ![Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=flat&logo=go&logoColor=white) [Golang](https://go.dev)   | Scripts d’installation des paquets   |
+| ![Go](https://img.shields.io/badge/Go-%2300ADD8.svg?style=flat&logo=go&logoColor=white) [Golang](https://go.dev)   | Langage principal et logique métier  |
 
 
 ## Auteur
