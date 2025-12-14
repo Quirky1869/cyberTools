@@ -13,10 +13,10 @@ import (
 	"github.com/ncruces/zenity"
 )
 
-// BackMsg est un message spécial pour dire à root.go : "C'est fini, reviens au menu"
+// Message de retour pour signaler au menu principal de reprendre la main
 type BackMsg struct{}
 
-// Les états internes de l'outil
+// États de la machine à états interne
 type SessionState int
 
 const (
@@ -25,78 +25,68 @@ const (
 	StateViewing
 )
 
-// Styles locaux
+// Définition des styles de l'interface
 var (
-	titleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Pink
-	errorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true) // Rouge
-	warnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFA500")).Bold(true) // Orange
-	infoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))            // Cyan
-	
-	// Nouveaux styles pour le File Picker
-	helpStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
-	pathStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
+	titleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	errorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true)
+	warnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFA500")).Bold(true)
+	infoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))
+
+	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
+	pathStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
 )
 
+// Modèle principal contenant les composants (Picker, Viewport) et l'état des données
 type Model struct {
 	state        SessionState
-	
-	// Composants
 	filePicker   filepicker.Model
 	viewport     viewport.Model
-	textInput    textinput.Model // Pour le filtre Log
-	pathInput    textinput.Model // Pour taper le chemin manuellement (ctrl+l)
-	
-	// Données
+	textInput    textinput.Model
+	pathInput    textinput.Model
 	selectedFile string
-	content      []string 
+	content      []string
 	width        int
 	height       int
-	
-	// États booléens
-	filtering    bool // Vrai si on tape un filtre dans le Viewer
-	enteringPath bool // Vrai si on tape un chemin dans le Picker
+	filtering    bool
+	enteringPath bool
 }
 
-// New initialise le modèle avec la taille actuelle de la fenêtre
+// Initialisation des composants avec configuration des couleurs et dimensions
 func New(w, h int) Model {
-	// 1. Config du FilePicker
 	fp := filepicker.New()
 	fp.AllowedTypes = []string{".log", ".txt", ".go", ".md", ".json", ".yaml", ".conf"}
 	fp.CurrentDirectory, _ = os.Getwd()
-// --- AJOUT : PERSONNALISATION DES COULEURS ---
-    // C'est ici qu'on change les couleurs de la liste des fichiers
-    fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))      // Curseur Rose (>)
-    fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Texte sélectionné Rose
-    fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))   // Dossiers Cyan
-    fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))        // Fichiers Blanc
-    // ---------------------------------------------
+	fp.Height = h - 8
+	fp.ShowHidden = false
 
-	fp.Height = h - 8 // On réduit un peu pour laisser la place au header/footer
-	fp.ShowHidden = false 
+	// Personnalisation des couleurs du FilePicker
+	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))
+	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))
+	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 
-	// 2. Config du TextInput pour le filtre (Viewer)
+	// Input pour le filtre de contenu
 	tiFilter := textinput.New()
 	tiFilter.Placeholder = "Filtrer (ex: /db)..."
 	tiFilter.CharLimit = 156
 	tiFilter.Width = 30
 
-	// 3. Config du TextInput pour le chemin (Picker - Ctrl+L)
+	// Input pour la saisie manuelle de chemin
 	tiPath := textinput.New()
 	tiPath.Placeholder = "/home/user/..."
 	tiPath.CharLimit = 256
 	tiPath.Width = 50
 
-	// 4. Config du Viewport (Viewer)
 	vp := viewport.New(w, h-4)
 
 	return Model{
-		state:      StateChooseMethod,
-		filePicker: fp,
-		textInput:  tiFilter,
-		pathInput:  tiPath,
-		viewport:   vp,
-		width:      w,
-		height:     h,
+		state:        StateChooseMethod,
+		filePicker:   fp,
+		textInput:    tiFilter,
+		pathInput:    tiPath,
+		viewport:     vp,
+		width:        w,
+		height:       h,
 		enteringPath: false,
 	}
 }
@@ -115,31 +105,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height - 4
-		m.filePicker.Height = msg.Height - 8 // Ajustement hauteur picker
+		m.filePicker.Height = msg.Height - 8
 
 	case tea.KeyMsg:
-		// Gestion globale de la sortie (si on n'est pas en train d'écrire)
+		// Sortie globale si aucune saisie n'est en cours
 		if !m.filtering && !m.enteringPath && (msg.String() == "ctrl+c") {
 			return m, func() tea.Msg { return BackMsg{} }
 		}
 	}
 
-	// Machine à état
 	switch m.state {
 
-	// ---------------------------------------------------------
-	// 1. CHOIX DE LA MÉTHODE (T/G)
-	// ---------------------------------------------------------
+	// Écran de choix : Terminal vs GUI
 	case StateChooseMethod:
 		if msg, ok := msg.(tea.KeyMsg); ok {
 			switch msg.String() {
 			case "q":
 				return m, func() tea.Msg { return BackMsg{} }
-			case "t": // Terminal
+			case "t":
 				m.state = StatePickingFile
 				m.filePicker.CurrentDirectory, _ = os.Getwd()
 				return m, m.filePicker.Init()
-			case "g": // Graphique
+			case "g":
 				path, err := zenity.SelectFile(zenity.Filename(m.filePicker.CurrentDirectory + "/"))
 				if err == nil && path != "" {
 					return m.loadFile(path)
@@ -147,29 +134,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// ---------------------------------------------------------
-	// 2. EXPLORATEUR DE FICHIERS (FILE PICKER)
-	// ---------------------------------------------------------
+	// Écran de sélection de fichier (File Picker)
 	case StatePickingFile:
-		// CAS A : On est en train de taper un chemin manuellement
+		// Gestion de la saisie manuelle du chemin (Ctrl+L)
 		if m.enteringPath {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.String() {
 				case "enter":
-					// On valide le chemin
 					newPath := m.pathInput.Value()
 					info, err := os.Stat(newPath)
-					// Si c'est un dossier valide, on y va
 					if err == nil && info.IsDir() {
 						m.filePicker.CurrentDirectory = newPath
-						m.filePicker.Init() // Rafraîchir la liste
+						m.filePicker.Init()
 					}
-					// Quoi qu'il arrive, on quitte le mode input
 					m.enteringPath = false
 					m.pathInput.Blur()
 				case "esc":
-					// Annuler
 					m.enteringPath = false
 					m.pathInput.Blur()
 				}
@@ -178,12 +159,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		// CAS B : Navigation normale dans le File Picker
+		// Navigation standard dans le File Picker
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.String() {
-			case "esc","q":
-				m.state = StateChooseMethod // Retour choix méthode
+			case "esc", "q":
+				m.state = StateChooseMethod
 				return m, nil
 			case "h":
 				m.filePicker.ShowHidden = !m.filePicker.ShowHidden
@@ -203,12 +184,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.loadFile(path)
 		}
 
-	// ---------------------------------------------------------
-	// 3. VISUALISATION DU LOG (VIEWER)
-	// ---------------------------------------------------------
+	// Écran de visualisation du fichier (Viewer)
 	case StateViewing:
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
+			// Gestion de la barre de filtrage
 			if m.filtering {
 				switch msg.String() {
 				case "enter", "esc":
@@ -220,6 +200,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
+			// Commandes du viewer
 			switch msg.String() {
 			case "/":
 				m.filtering = true
@@ -229,8 +210,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput.Reset()
 				m.applyFilter()
 			case "esc", "q":
-				// Retour au file picker si on veut changer de fichier, ou quitter
-				// Ici on fait "Retour au file picker" pour fluidifier
 				m.state = StatePickingFile
 				return m, nil
 			}
@@ -252,11 +231,9 @@ func (m Model) View() string {
 
 	case StatePickingFile:
 		title := titleStyle.Render("LogV - Ouvrir un fichier")
-		
-		// En-tête : Chemin actuel (PWD)
 		currentDir := fmt.Sprintf(" %s", pathStyle.Render(m.filePicker.CurrentDirectory))
-		
-		// 2. Gestion de l'affichage Input ou Picker
+
+		// Affichage conditionnel selon si on tape un chemin ou si on navigue
 		var content string
 		if m.enteringPath {
 			content = fmt.Sprintf("\n\nEntrez le chemin absolu :\n%s", m.pathInput.View())
@@ -264,19 +241,17 @@ func (m Model) View() string {
 			content = "\n" + m.filePicker.View()
 		}
 
-		// 3. Pied de page : Aide contextuelle grise
 		var helpText string
 		if m.enteringPath {
 			helpText = "enter: valider • esc: annuler"
 		} else {
-			// Indicateur visuel pour les fichiers cachés
 			hiddenStatus := "off"
 			if m.filePicker.ShowHidden {
 				hiddenStatus = "ON"
 			}
 			helpText = fmt.Sprintf("↑/↓/←/→: naviguer • enter: ouvrir • h: cachés(%s) • ctrl+l: chemin • esc: retour", hiddenStatus)
 		}
-		
+
 		footer := helpStyle.Render("\n" + helpText)
 
 		return fmt.Sprintf("\n  %s\n\n  %s%s%s", title, currentDir, content, footer)
@@ -294,21 +269,21 @@ func (m Model) View() string {
 	return ""
 }
 
-// loadFile lit le fichier et prépare le viewport
+// Charge le fichier en mémoire et applique le filtre initial
 func (m Model) loadFile(path string) (Model, tea.Cmd) {
 	m.selectedFile = path
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return m, nil 
+		return m, nil
 	}
 	m.content = strings.Split(string(content), "\n")
-	
+
 	m.applyFilter()
 	m.state = StateViewing
 	return m, nil
 }
 
-// applyFilter génère le contenu coloré et filtré
+// Applique le filtre de texte et la coloration syntaxique des logs
 func (m *Model) applyFilter() {
 	var builder strings.Builder
 	filter := strings.ToLower(m.textInput.Value())
@@ -317,21 +292,16 @@ func (m *Model) applyFilter() {
 		lineLower := strings.ToLower(line)
 		lineUpper := strings.ToUpper(line)
 
-		// 1. Filtrage
 		if filter != "" && !strings.Contains(lineLower, filter) {
 			continue
 		}
 
-		// 2. Coloriage
+		// Coloration basée sur les mots-clés standards (ERROR, WARN, INFO)
 		coloredLine := line
-		
-		// ERREURS
 		if strings.Contains(lineUpper, "ERROR") || strings.Contains(lineUpper, "FAIL") || strings.Contains(lineUpper, "CRIT") || strings.Contains(lineUpper, "FATAL") {
 			coloredLine = errorStyle.Render(line)
-		// WARNINGS
-		} else if strings.Contains(lineUpper, "WARN") { 
+		} else if strings.Contains(lineUpper, "WARN") {
 			coloredLine = warnStyle.Render(line)
-		// INFOS
 		} else if strings.Contains(lineUpper, "INFO") || strings.Contains(lineUpper, "DEBUG") || strings.Contains(lineUpper, "NOTICE") {
 			coloredLine = infoStyle.Render(line)
 		}

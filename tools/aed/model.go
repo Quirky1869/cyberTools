@@ -16,16 +16,16 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// --- TYPES ---
-
+// Signal de retour au menu principal
 type BackMsg struct{}
 
-// Struct pour identifier un fichier de manière unique sur tout le système
+// Identifiant unique d'un fichier (device + inode) pour gérer les liens physiques
 type fileID struct {
 	dev uint64
 	ino uint64
 }
 
+// Structure représentant un nœud dans l'arborescence de fichiers
 type FileNode struct {
 	Name     string
 	Path     string
@@ -35,6 +35,7 @@ type FileNode struct {
 	Parent   *FileNode
 }
 
+// Machine à états pour gérer les différentes vues de l'outil
 type SessionState int
 
 const (
@@ -43,13 +44,13 @@ const (
 	StateBrowsing
 )
 
+// Message envoyé lorsque le scan récursif est terminé
 type scanFinishedMsg struct {
 	root *FileNode
 	err  error
 }
 
-// --- STYLES ---
-
+// Définition des styles visuels pour Lipgloss
 var (
 	titleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
 	pathStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff")).Bold(true)
@@ -63,8 +64,7 @@ var (
 	countStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff")).Bold(true).PaddingLeft(2)
 )
 
-// --- MODEL ---
-
+// Modèle principal contenant l'état du scanner et de l'interface
 type Model struct {
 	state     SessionState
 	textInput textinput.Model
@@ -81,6 +81,7 @@ type Model struct {
 	err           error
 }
 
+// Initialisation des composants (input, spinner) et des valeurs par défaut
 func New(w, h int) Model {
 	ti := textinput.New()
 	ti.Placeholder = "/home/user"
@@ -109,7 +110,7 @@ func (m Model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-// Helper pour générer la liste d'affichage avec "." et ".."
+// Prépare la liste des éléments à afficher en ajoutant les entrées de navigation (. et ..)
 func (m Model) getDisplayItems() []*FileNode {
 	var items []*FileNode
 
@@ -117,7 +118,6 @@ func (m Model) getDisplayItems() []*FileNode {
 		return items
 	}
 
-	// 1. Ajout de "."
 	dot := &FileNode{
 		Name:  ".",
 		Path:  m.currentNode.Path,
@@ -126,7 +126,6 @@ func (m Model) getDisplayItems() []*FileNode {
 	}
 	items = append(items, dot)
 
-	// 2. Ajout de ".."
 	if m.currentNode.Parent != nil {
 		parentPath := filepath.Dir(m.currentNode.Path)
 		dotdot := &FileNode{
@@ -138,12 +137,12 @@ func (m Model) getDisplayItems() []*FileNode {
 		items = append(items, dotdot)
 	}
 
-	// 3. Ajout des enfants
 	items = append(items, m.currentNode.Children...)
 
 	return items
 }
 
+// Boucle principale de gestion des événements et des états
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -157,7 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return BackMsg{} }
 		}
 
-		// ETAT 1 : INPUT
+		// Gestion de la saisie du chemin à analyser
 		if m.state == StateInputPath {
 			switch msg.String() {
 			case "enter":
@@ -181,24 +180,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		// ETAT 2 : SCANNING
+		// Gestion pendant le scan (permet d'annuler)
 		if m.state == StateScanning {
 			if msg.String() == "q" || msg.String() == "esc" {
 				return m, func() tea.Msg { return BackMsg{} }
 			}
 		}
 
-		// ETAT 3 : BROWSING
+		// Gestion de la navigation dans les résultats
 		if m.state == StateBrowsing {
 			items := m.getDisplayItems()
 
 			switch msg.String() {
 
-			// --- QUITTER ---
 			case "q":
 				return m, func() tea.Msg { return BackMsg{} }
 
-			// --- "g": EXPLORER (GUI) ---
+			// Ouvre le fichier ou dossier avec l'explorateur par défaut du système (xdg-open)
 			case "g":
 				if len(items) > 0 && m.cursor < len(items) {
 					selected := items[m.cursor]
@@ -207,36 +205,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 
-			// --- "s": OPEN SHELL (CLI) ---
+			// Suspend l'interface pour ouvrir un shell dans le dossier sélectionné
 			case "s":
 				if len(items) > 0 && m.cursor < len(items) {
 					selected := items[m.cursor]
 
-					// On cible le dossier (si c'est un fichier, on prend le dossier parent)
 					targetPath := selected.Path
 					if !selected.IsDir {
 						targetPath = filepath.Dir(selected.Path)
 					}
 
-					// On récupère le shell de l'utilisateur ($SHELL) ou bash par défaut
 					shell := os.Getenv("SHELL")
 					if shell == "" {
 						shell = "/bin/bash"
 					}
 
-					// On prépare la commande
 					c := exec.Command(shell)
 					c.Dir = targetPath
 
-					// tea.ExecProcess suspend l'UI, lance le shell, et reprend l'UI à la fin
 					return m, tea.ExecProcess(c, func(err error) tea.Msg {
-						// Callback quand le shell est fermé
 						return nil
 					})
 				}
 				return m, nil
 
-			// --- NAVIGATION ---
+			// Remonter au dossier parent
 			case "backspace", "left", "h", "esc":
 				if m.currentNode.Parent != nil {
 					m.currentNode = m.currentNode.Parent
@@ -244,6 +237,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.yOffset = 0
 				}
 
+			// Entrer dans un dossier
 			case "enter", "right", "l":
 				if len(items) > 0 && m.cursor < len(items) {
 					selected := items[m.cursor]
@@ -270,6 +264,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
+			// Déplacement du curseur
 			case "up", "k":
 				if m.cursor > 0 {
 					m.cursor--
@@ -288,6 +283,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+	// Réception du résultat du scan
 	case scanFinishedMsg:
 		if msg.err != nil {
 			m.err = msg.err
@@ -310,12 +306,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	// Vue 1 : Saisie du chemin
 	if m.state == StateInputPath {
 		title := titleStyle.Render("AED - Analyseur d'Espace Disque")
 		input := m.textInput.View()
 		return fmt.Sprintf("\n  %s\n\n  Entrez le dossier à analyser :\n  %s\n\n  %s", title, input, helpStyle.Render("(enter: valider • esc: quitter)"))
 	}
 
+	// Vue 2 : Chargement (Spinner)
 	if m.state == StateScanning {
 		count := atomic.LoadInt64(m.filesScanned)
 		return fmt.Sprintf(
@@ -325,6 +323,7 @@ func (m Model) View() string {
 		)
 	}
 
+	// Vue 3 : Explorateur de fichiers avec barres de taille
 	if m.state == StateBrowsing {
 		if m.currentNode == nil {
 			return "Erreur: Node vide"
@@ -367,6 +366,7 @@ func (m Model) View() string {
 			} else {
 				sizeStr = fmt.Sprintf("%8s", formatBytes(item.Size))
 
+				// Calcul du pourcentage pour la barre visuelle
 				percent := 0.0
 				if m.currentNode.Size > 0 {
 					percent = float64(item.Size) / float64(m.currentNode.Size)
@@ -392,7 +392,6 @@ func (m Model) View() string {
 		}
 
 		content := strings.Join(rows, "\n")
-		// Ajout de 's' dans le footer
 		footer := helpStyle.Render("\n↑/↓/←/→: naviguer • enter: entrer • g: explorer • s: shell • q: quitter")
 
 		return fmt.Sprintf("\n%s\n%s\n%s", header, content, footer)
@@ -401,8 +400,7 @@ func (m Model) View() string {
 	return ""
 }
 
-// --- LOGIQUE METIER ---
-
+// Commande Tea pour lancer le scan en arrière-plan
 func scanDirectoryCmd(path string, counter *int64, visited map[fileID]struct{}) tea.Cmd {
 	return func() tea.Msg {
 		root, err := scanRecursively(path, nil, counter, visited)
@@ -410,6 +408,8 @@ func scanDirectoryCmd(path string, counter *int64, visited map[fileID]struct{}) 
 	}
 }
 
+// Fonction récursive principale : parcourt le disque, calcule les tailles et trie par taille décroissante
+// Utilisation de 'visited' pour éviter de compter plusieurs fois les hardlinks
 func scanRecursively(path string, parent *FileNode, counter *int64, visited map[fileID]struct{}) (*FileNode, error) {
 	atomic.AddInt64(counter, 1)
 
@@ -443,6 +443,7 @@ func scanRecursively(path string, parent *FileNode, counter *int64, visited map[
 			continue
 		}
 
+		// Exclusion des pseudo-systèmes de fichiers sous Linux
 		if node.Path == "/" && (entry.Name() == "proc" || entry.Name() == "sys" || entry.Name() == "dev" || entry.Name() == "run") {
 			continue
 		}
@@ -459,6 +460,7 @@ func scanRecursively(path string, parent *FileNode, counter *int64, visited map[
 			atomic.AddInt64(counter, 1)
 
 			var size int64
+			// Calcul précis de la taille disque (blocks) et déduplication via inode/dev
 			if stat, ok := info.Sys().(*syscall.Stat_t); ok {
 				size = stat.Blocks * 512
 				id := fileID{dev: stat.Dev, ino: stat.Ino}
@@ -484,6 +486,7 @@ func scanRecursively(path string, parent *FileNode, counter *int64, visited map[
 
 	node.Size = totalSize
 
+	// Tri des enfants du plus gros au plus petit
 	sort.Slice(node.Children, func(i, j int) bool {
 		return node.Children[i].Size > node.Children[j].Size
 	})
@@ -491,6 +494,7 @@ func scanRecursively(path string, parent *FileNode, counter *int64, visited map[
 	return node, nil
 }
 
+// Formate les octets en unité lisible (KB, MB, GB...)
 func formatBytes(b int64) string {
 	const unit = 1024
 	if b < unit {

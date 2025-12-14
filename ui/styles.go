@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// 1. Définition de la structure d'une Palette de couleurs
+// Structure définissant la palette de couleurs utilisée pour le thème
 type ThemePalette struct {
 	Primary    string
 	Secondary  string
@@ -18,7 +18,7 @@ type ThemePalette struct {
 	Septenary  string
 }
 
-// 2. Définition des thèmes disponibles
+// Définition des palettes de couleurs prédéfinies
 var (
 	NeonTheme = ThemePalette{
 		Primary:    "#626262", // Bordures inactives
@@ -45,7 +45,7 @@ var (
 	}
 )
 
-// 3. Structure regroupant tous tes styles Lipgloss
+// Regroupe l'ensemble des styles Lipgloss et Help basés sur la palette active
 type Styles struct {
 	Doc          lipgloss.Style
 	Title        lipgloss.Style
@@ -60,19 +60,17 @@ type Styles struct {
 	Palette      ThemePalette
 }
 
-// 4. Le Générateur : Il fabrique les styles à partir d'une palette donnée
+// Génère l'ensemble des styles de l'interface à partir de la palette fournie
 func MakeStyles(t ThemePalette) Styles {
 	return Styles{
 		Palette: t,
 
 		Doc: lipgloss.NewStyle().Padding(1, 2),
 
-		// Titre ASCII -> Senary
 		Title: lipgloss.NewStyle().
 			Foreground(lipgloss.Color(t.Senary)).
 			Bold(true),
 
-		// 1. Catégories actives -> Tertiary
 		ActiveTab: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color(t.Tertiary)).
@@ -94,9 +92,8 @@ func MakeStyles(t ThemePalette) Styles {
 			Padding(1, 2).
 			Align(lipgloss.Left),
 
-		// 2. Outil Sélectionné -> Quaternary
 		SelectedTool: lipgloss.NewStyle().
-			Foreground(lipgloss.Color(t.Quaternary)). // Modification ici
+			Foreground(lipgloss.Color(t.Quaternary)).
 			PaddingLeft(1).
 			Bold(true).
 			SetString("→"),
@@ -109,15 +106,11 @@ func MakeStyles(t ThemePalette) Styles {
 
 		ToolDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Gray)),
 
-		// Styles de l'aide en bas
 		Help: help.Styles{
-			// Touches -> Septenary
-			ShortKey: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
-			FullKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
-
-			// 3. Descriptions Aide -> Quinary
-			ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)), // Modification ici
-			FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)), // Modification ici
+			ShortKey:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
+			FullKey:   lipgloss.NewStyle().Foreground(lipgloss.Color(t.Septenary)),
+			ShortDesc: lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)),
+			FullDesc:  lipgloss.NewStyle().Foreground(lipgloss.Color(t.Quinary)),
 		},
 	}
 }

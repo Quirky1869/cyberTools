@@ -12,10 +12,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// --- TYPES & MESSAGES ---
-
+// Signal de retour au menu principal
 type BackMsg struct{}
 
+// États de la machine à états (sélection ou navigation)
 type SessionState int
 
 const (
@@ -23,7 +23,7 @@ const (
 	StateTree
 )
 
-// Node représente un élément de l'arbre YAML
+// Structure récursive représentant un nœud de l'arbre JSON/YAML
 type Node struct {
 	Key      string
 	Value    string
@@ -33,61 +33,46 @@ type Node struct {
 	IsLeaf   bool
 }
 
-// --- STYLES ---
-
+// Définition des styles de l'interface
 var (
-	titleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
-	keyStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Pink
-	valStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))            // Cyan
-
-	// AJOUTS UX
-	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
-	pathStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
-
-	// Curseur
+	titleStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	keyStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	valStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))
+	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
+	pathStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
 	selectedStyle = lipgloss.NewStyle().Background(lipgloss.Color("#333333")).Bold(true)
 )
 
-// --- MODEL ---
-
+// Modèle principal contenant l'état du sélecteur de fichier et de l'arbre de données
 type Model struct {
 	state      SessionState
 	filePicker filepicker.Model
 
-	// Données de l'arbre
 	root      *Node
-	flatNodes []*Node // Liste linéaire des nœuds visibles (pour l'affichage)
-	cursor    int     // Position du curseur dans flatNodes
-	yOffset   int     // Scroll vertical
+	flatNodes []*Node
+	cursor    int
+	yOffset   int
 
 	width, height int
 	err           error
 }
 
+// Initialisation du modèle et configuration du FilePicker avec le thème
 func New(w, h int) Model {
 	fp := filepicker.New()
-	
+
 	fp.AllowedTypes = []string{".yaml", ".yml", ".json", ".txt", ".md", ".go", ".mod"}
 	fp.CurrentDirectory, _ = os.Getwd()
-	
-	// --- PERSONNALISATION DES COULEURS ---
-	
-	// 1. Couleur du curseur (la petite flèche >)
-	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")) // Rose
-	
-	// 2. Couleur du texte sélectionné
-	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Rose Gras
-	
-	// 3. (Optionnel) Couleur des dossiers
-	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff")) // Cyan
-	
-	// 4. (Optionnel) Couleur des fichiers normaux
-	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")) // Blanc
 
-	// -------------------------------------
+	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))
+	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))
+	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 
 	fpHeight := h - 8
-	if fpHeight < 5 { fpHeight = 5 }
+	if fpHeight < 5 {
+		fpHeight = 5
+	}
 	fp.Height = fpHeight
 	fp.ShowHidden = false
 
@@ -118,20 +103,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return BackMsg{} }
 		}
 
-		// Gestion spécifique selon l'état
+		// Gestion de la vue sélection de fichier
 		if m.state == StateSelectFile {
 			switch msg.String() {
 			case "q", "esc":
 				return m, func() tea.Msg { return BackMsg{} }
 			case "h":
-				// AJOUT UX: Toggle fichiers cachés
 				m.filePicker.ShowHidden = !m.filePicker.ShowHidden
 				return m, m.filePicker.Init()
 			}
 		} else if m.state == StateTree {
+			// Gestion de la vue Arbre (Tree View)
 			switch msg.String() {
 			case "q", "esc":
-				// Retour au file picker
 				m.state = StateSelectFile
 				m.root = nil
 				m.flatNodes = nil
@@ -139,11 +123,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.yOffset = 0
 				return m, m.filePicker.Init()
 
-			// Navigation
+			// Navigation verticale avec gestion du scroll
 			case "up", "k":
 				if m.cursor > 0 {
 					m.cursor--
-					// Scroll up si besoin
 					if m.cursor < m.yOffset {
 						m.yOffset = m.cursor
 					}
@@ -151,20 +134,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "down", "j":
 				if m.cursor < len(m.flatNodes)-1 {
 					m.cursor++
-					// Scroll down si besoin
-					// m.height - 4 (header/footer)
 					visibleHeight := m.height - 4
 					if m.cursor >= m.yOffset+visibleHeight {
 						m.yOffset = m.cursor - visibleHeight + 1
 					}
 				}
 
-			// Action
+			// Expansion / Réduction des nœuds
 			case "enter", " ", "space", "right", "l":
 				node := m.flatNodes[m.cursor]
 				if !node.IsLeaf {
 					node.Expanded = !node.Expanded
-					// Si on ferme, on doit s'assurer que si on était dans un enfant, on remonte
 					m.updateFlatNodes()
 				}
 			case "left", "h":
@@ -172,15 +152,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if node.Expanded {
 					node.Expanded = false
 					m.updateFlatNodes()
-				} else {
-					// Si déjà fermé, on pourrait remonter au parent (logique plus complexe, optionnel)
 				}
 			}
 			return m, nil
 		}
 	}
 
-	// Update des composants enfants
+	// Mise à jour du composant enfant FilePicker
 	if m.state == StateSelectFile {
 		m.filePicker, cmd = m.filePicker.Update(msg)
 		cmds = append(cmds, cmd)
@@ -199,19 +177,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	// Vue 1 : Sélection du fichier
 	if m.state == StateSelectFile {
-		// --- VUE AMELIOREE (Comme LogV) ---
-
-		// 1. Titre
 		title := titleStyle.Render("structViewer - Ouvrir un fichier")
-
-		// 2. PWD
 		currentDir := fmt.Sprintf(" %s", pathStyle.Render(m.filePicker.CurrentDirectory))
-
-		// 3. Filepicker
 		content := "\n" + m.filePicker.View()
 
-		// 4. Footer Aide
 		hiddenStatus := "off"
 		if m.filePicker.ShowHidden {
 			hiddenStatus = "ON"
@@ -222,6 +193,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("\n  %s\n\n  %s%s%s", title, currentDir, content, footer)
 	}
 
+	// Vue 2 : Affichage de l'arbre JSON/YAML
 	if m.state == StateTree {
 		if m.err != nil {
 			return fmt.Sprintf("Erreur: %v\n(q pour quitter)", m.err)
@@ -230,14 +202,12 @@ func (m Model) View() string {
 			return "Fichier vide ou invalide."
 		}
 
-		// Header
 		header := titleStyle.Render(" Navigateur YAML/JSON - structViewer \n")
 
-		// Contenu Tree View
 		var lines []string
 
-		// Calcul de la zone visible
-		visibleHeight := m.height - 5 // un peu moins haut a cause du footer
+		// Calcul de la zone visible (Virtual Scrolling)
+		visibleHeight := m.height - 5
 		if visibleHeight < 1 {
 			visibleHeight = 1
 		}
@@ -247,15 +217,13 @@ func (m Model) View() string {
 			end = len(m.flatNodes)
 		}
 
-		// Rendu des lignes visibles uniquement
+		// Rendu des lignes visibles
 		for i := m.yOffset; i < end; i++ {
 			node := m.flatNodes[i]
 
-			// Indentation
 			indent := strings.Repeat("  ", node.Level)
 
-			// Icône
-			icon := "  " // Feuille
+			icon := "  "
 			if !node.IsLeaf {
 				if node.Expanded {
 					icon = "▼ "
@@ -264,7 +232,6 @@ func (m Model) View() string {
 				}
 			}
 
-			// Texte
 			lineContent := ""
 			if node.Key != "" {
 				lineContent += keyStyle.Render(node.Key + ": ")
@@ -275,16 +242,13 @@ func (m Model) View() string {
 
 			fullLine := fmt.Sprintf("%s%s%s", indent, icon, lineContent)
 
-			// Application du style de sélection
 			if i == m.cursor {
-				// On force la ligne à prendre toute la largeur pour voir la sélection
 				fullLine = selectedStyle.Render(fmt.Sprintf("%-*s", m.width-2, fullLine))
 			}
 
 			lines = append(lines, fullLine)
 		}
 
-		// Footer pour l'arbre
 		footer := helpStyle.Render("\n↑/↓: scroll • enter/space: ouvrir/fermer • q: retour")
 
 		return header + "\n" + strings.Join(lines, "\n") + "\n" + footer
@@ -293,9 +257,7 @@ func (m Model) View() string {
 	return "Loading..."
 }
 
-// --- LOGIQUE METIER ---
-
-// loadAndParseYAML lit le fichier et construit l'arbre
+// Charge le fichier, parse le YAML/JSON et construit l'arbre initial
 func (m *Model) loadAndParseYAML(path string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -308,22 +270,17 @@ func (m *Model) loadAndParseYAML(path string) error {
 		return err
 	}
 
-	// Construction de l'arbre racine
 	m.root = buildTree("root", data, 0)
-	m.root.Expanded = true // La racine est ouverte par défaut
+	m.root.Expanded = true
 
-	// Initialisation de la vue plate
 	m.updateFlatNodes()
 	return nil
 }
 
-// updateFlatNodes met à jour la liste linéaire utilisée par la View
-// en parcourant l'arbre selon l'état Expanded de chaque nœud
+// Met à jour la liste plate (flatNodes) utilisée pour l'affichage en parcourant récursivement les nœuds ouverts
 func (m *Model) updateFlatNodes() {
 	m.flatNodes = []*Node{}
 	if m.root != nil {
-		// On saute la racine "virtuelle" pour l'affichage, on affiche direct ses enfants
-		// ou alors on affiche la racine si on veut. Ici on affiche les enfants direct pour faire propre.
 		for _, child := range m.root.Children {
 			m.recurseFlatten(child)
 		}
@@ -339,7 +296,7 @@ func (m *Model) recurseFlatten(node *Node) {
 	}
 }
 
-// buildTree construit récursivement les nœuds
+// Construit récursivement la structure de nœuds à partir des données brutes (Map ou Slice)
 func buildTree(key string, data interface{}, level int) *Node {
 	node := &Node{
 		Key:   key,
@@ -349,7 +306,6 @@ func buildTree(key string, data interface{}, level int) *Node {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		node.IsLeaf = false
-		// Tri des clés pour un affichage stable
 		keys := make([]string, 0, len(v))
 		for k := range v {
 			keys = append(keys, k)
@@ -364,13 +320,11 @@ func buildTree(key string, data interface{}, level int) *Node {
 	case []interface{}:
 		node.IsLeaf = false
 		for i, item := range v {
-			// Pour les listes, la clé est l'index (ex: "- [0]")
 			child := buildTree(fmt.Sprintf("- [%d]", i), item, level+1)
 			node.Children = append(node.Children, child)
 		}
 
 	default:
-		// C'est une feuille (string, int, bool...)
 		node.IsLeaf = true
 		node.Value = fmt.Sprintf("%v", v)
 	}

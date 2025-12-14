@@ -2,7 +2,7 @@ package ui
 
 import "github.com/charmbracelet/bubbles/key"
 
-// KeyMap définit toutes les touches utilisables
+// Définition de tous les raccourcis clavier disponibles dans l'application
 type KeyMap struct {
 	Up          key.Binding
 	Down        key.Binding
@@ -15,21 +15,20 @@ type KeyMap struct {
 	ToggleTheme key.Binding
 }
 
-// ShortHelp renvoie les touches affichées tout le temps en bas
+// Implémentation de l'interface d'aide
 func (k KeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Tab, k.Quit}
 }
 
-// FullHelp renvoie toutes les touches (affiché quand on appuie sur ?)
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right}, // Navigation
-		{k.ToggleTheme, k.Tab, k.Enter}, // Actions
-		{k.Help, k.Quit},                // Système
+		{k.Up, k.Down, k.Left, k.Right},
+		{k.ToggleTheme, k.Tab, k.Enter},
+		{k.Help, k.Quit},
 	}
 }
 
-// DefaultKeyMap définit les touches par défaut
+// Configuration des touches par défaut (support navigation Vim et flèches)
 var DefaultKeyMap = KeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),

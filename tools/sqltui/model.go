@@ -14,9 +14,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Message de retour au menu principal
+// Message de retour pour signaler au menu principal de reprendre la main
 type BackMsg struct{}
 
+// États de la machine à états interne
 type SessionState int
 
 const (
@@ -24,6 +25,7 @@ const (
 	StateBrowser
 )
 
+// Gestion du focus clavier dans l'interface de navigation (Liste des tables vs Grille de données)
 type FocusArea int
 
 const (
@@ -31,6 +33,7 @@ const (
 	FocusData
 )
 
+// Structure adaptatrice pour afficher les noms de tables dans la liste Bubble Tea
 type tableItem struct {
 	name, desc string
 }
@@ -39,17 +42,16 @@ func (i tableItem) Title() string       { return i.name }
 func (i tableItem) Description() string { return i.desc }
 func (i tableItem) FilterValue() string { return i.name }
 
-// --- Styles ---
+// Définition des styles globaux pour les bordures, titres et textes d'aide
 var (
 	titleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
 	borderStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#500aff"))
 	focusStyle  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#00f6ff"))
-
-	// AJOUTS POUR L'HARMONISATION UX
-	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))            // Gris pour l'aide
-	pathStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true) // Cyan pour le chemin
+	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff00d4"))
+	pathStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#500aff")).Bold(true)
 )
 
+// Modèle principal contenant l'état de la connexion SQL et les composants UI
 type Model struct {
 	state         SessionState
 	focus         FocusArea
@@ -63,19 +65,17 @@ type Model struct {
 	err           error
 }
 
+// Initialisation des composants graphiques (FilePicker, List, Table) et application des thèmes de couleurs
 func New(w, h int) Model {
 	fp := filepicker.New()
 	fp.AllowedTypes = []string{".db", ".sqlite", ".sqlite3", ".db3"}
 	fp.CurrentDirectory, _ = os.Getwd()
 
-	// --- PERSONNALISATION DES COULEURS (Comme les autres outils) ---
-	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))              // Rose
-	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true) // Rose Gras
-	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))           // Cyan
-	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))                // Blanc
-	// -------------------------------------------------------------
+	fp.Styles.Cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D"))
+	fp.Styles.Selected = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF2A6D")).Bold(true)
+	fp.Styles.Directory = lipgloss.NewStyle().Foreground(lipgloss.Color("#00f6ff"))
+	fp.Styles.File = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 
-	// Ajustement hauteur pour header/footer
 	fpHeight := h - 8
 	if fpHeight < 5 {
 		fpHeight = 5
@@ -119,19 +119,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	// Gestion du redimensionnement dynamique de la fenêtre
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.filePicker.Height = msg.Height - 8 // Ajustement hauteur
+		m.filePicker.Height = msg.Height - 8
 		m.list.SetHeight(msg.Height - 5)
 		m.table.SetHeight(msg.Height - 8)
 
+	// Gestion des touches globales (Quitter, Fichiers cachés)
 	case tea.KeyMsg:
 		if m.state == StateSelectFile {
 			switch msg.String() {
 			case "q":
 				return m, func() tea.Msg { return BackMsg{} }
-			case "h": // Toggle fichiers cachés
+			case "h":
 				m.filePicker.ShowHidden = !m.filePicker.ShowHidden
 				return m, m.filePicker.Init()
 			}
@@ -146,6 +148,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.state {
+	// Logique de sélection de fichier
 	case StateSelectFile:
 		m.filePicker, cmd = m.filePicker.Update(msg)
 		cmds = append(cmds, cmd)
@@ -160,6 +163,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+	// Logique de navigation dans la base de données (Liste <-> Table)
 	case StateBrowser:
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -205,18 +209,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	// --- VUE 1 : SELECTEUR DE FICHIER (mise à jour UX) ---
+	// Vue 1 : Explorateur de fichiers pour choisir la BDD
 	if m.state == StateSelectFile {
-		// 1. Titre
 		title := titleStyle.Render("SqlTUI - Ouvrir une base de données")
-
-		// 2. Chemin actuel (PWD)
 		currentDir := fmt.Sprintf(" %s", pathStyle.Render(m.filePicker.CurrentDirectory))
-
-		// 3. Contenu Picker
 		content := "\n" + m.filePicker.View()
 
-		// 4. Pied de page : Aide
 		hiddenStatus := "off"
 		if m.filePicker.ShowHidden {
 			hiddenStatus = "ON"
@@ -227,7 +225,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("\n  %s\n\n  %s%s%s", title, currentDir, content, footer)
 	}
 
-	// --- VUE 2 : NAVIGATEUR BDD ---
+	// Vue 2 : Interface principale avec liste des tables (gauche) et données (droite)
 	if m.state == StateBrowser {
 		header := titleStyle.Render(fmt.Sprintf(" BDD: %s ", m.dbPath))
 
@@ -242,7 +240,6 @@ func (m Model) View() string {
 			tableStyle = focusStyle
 		}
 
-		// Calcul de sécurité
 		safeTableWidth := m.width - 36
 		if safeTableWidth < 10 {
 			safeTableWidth = 10
@@ -255,7 +252,7 @@ func (m Model) View() string {
 
 		tableView := tableStyle.
 			Width(safeTableWidth).
-			MaxWidth(safeTableWidth). // Sécurité max width
+			MaxWidth(safeTableWidth).
 			Height(m.height - 4).
 			Render(lipgloss.JoinVertical(lipgloss.Left,
 				lipgloss.NewStyle().Bold(true).Render(tableInfo),
@@ -276,6 +273,7 @@ func (m Model) View() string {
 	return "Loading..."
 }
 
+// Ouvre la connexion SQLite et vérifie l'accès
 func (m *Model) openDB(path string) error {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
@@ -288,6 +286,7 @@ func (m *Model) openDB(path string) error {
 	return nil
 }
 
+// Récupère la liste des tables utilisateur (exclut sqlite_*) pour peupler la liste
 func (m *Model) loadTables() {
 	if m.db == nil {
 		return
@@ -307,15 +306,14 @@ func (m *Model) loadTables() {
 	m.list.SetItems(items)
 }
 
+// Charge les données de la table sélectionnée, adapte les colonnes à la largeur disponible et convertit les types
 func (m *Model) loadTableData(tableName string) {
 	if m.db == nil {
 		return
 	}
 
-	// 1. Reset ROWS
 	m.table.SetRows([]table.Row{})
 
-	// 2. Récupérer les colonnes d'abord
 	dummyQuery := fmt.Sprintf("SELECT * FROM %s LIMIT 1", tableName)
 	rows, err := m.db.Query(dummyQuery)
 	if err != nil {
@@ -328,7 +326,6 @@ func (m *Model) loadTableData(tableName string) {
 		return
 	}
 
-	// 3. LOGIQUE DE SECURITE D'AFFICHAGE
 	availableWidth := m.width - 40
 	if availableWidth < 0 {
 		availableWidth = 10
@@ -340,13 +337,11 @@ func (m *Model) loadTableData(tableName string) {
 		maxColsToDisplay = 1
 	}
 
-	// Si la table a trop de colonnes, on coupe
 	displayColumns := allColumns
 	if len(allColumns) > maxColsToDisplay {
 		displayColumns = allColumns[:maxColsToDisplay]
 	}
 
-	// Configuration des colonnes
 	var tableCols []table.Column
 	finalColWidth := availableWidth / len(displayColumns)
 
@@ -355,7 +350,6 @@ func (m *Model) loadTableData(tableName string) {
 	}
 	m.table.SetColumns(tableCols)
 
-	// 4. Récupérer les vraies données
 	safeCols := strings.Join(displayColumns, ", ")
 	finalQuery := fmt.Sprintf("SELECT %s FROM %s LIMIT 50", safeCols, tableName)
 

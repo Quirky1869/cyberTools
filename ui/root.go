@@ -7,8 +7,6 @@ import (
 	"github.com/Quirky1869/cyberTools/tools/aed"
 	"github.com/Quirky1869/cyberTools/tools/logv"
 	"github.com/Quirky1869/cyberTools/tools/sqltui"
-
-	// J'ajoute un alias explicite "structviewer" pour éviter les soucis majuscule/minuscule
 	structviewer "github.com/Quirky1869/cyberTools/tools/structViewer"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -18,6 +16,7 @@ import (
 	figure "github.com/common-nighthawk/go-figure"
 )
 
+// États possibles du focus clavier (Navigation onglets vs Liste outils)
 type FocusState int
 
 const (
@@ -25,6 +24,7 @@ const (
 	FocusTools
 )
 
+// Modèle principal contenant l'état global de l'application et l'outil actif
 type Model struct {
 	categories      []tools.Category
 	activeCatIndex  int
@@ -35,16 +35,13 @@ type Model struct {
 	styles          Styles
 	width           int
 	height          int
-
-	// Champ pour stocker l'outil en cours d'exécution (nil si on est au menu)
-	currentTool tea.Model
+	currentTool     tea.Model
 }
 
+// Initialisation du modèle avec chargement du thème et des catégories
 func NewModel() Model {
-	// On initialise les styles avec le thème Neon par défaut
 	initialStyles := MakeStyles(NeonTheme)
 
-	// On configure l'aide avec les styles du thème
 	h := help.New()
 	h.Styles = initialStyles.Help
 
@@ -54,7 +51,7 @@ func NewModel() Model {
 		keys:        DefaultKeyMap,
 		help:        h,
 		styles:      initialStyles,
-		currentTool: nil, // Pas d'outil au démarrage
+		currentTool: nil,
 	}
 }
 
@@ -63,14 +60,11 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// ---------------------------------------------------------
-	// 1. GESTION DE L'OUTIL ACTIF (SI UN OUTIL EST LANCÉ)
-	// ---------------------------------------------------------
+	// Gestion de l'outil actif : on délègue les événements à l'outil ou on revient au menu (BackMsg)
 	if m.currentTool != nil {
-		// On vérifie si l'outil envoie le signal de retour "BackMsg"
 		if _, ok := msg.(logv.BackMsg); ok {
-			m.currentTool = nil       // On ferme l'outil
-			return m, tea.ClearScreen // On nettoie l'écran pour réafficher le menu proprement
+			m.currentTool = nil
+			return m, tea.ClearScreen
 		}
 
 		if _, ok := msg.(sqltui.BackMsg); ok {
@@ -88,15 +82,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.ClearScreen
 		}
 
-		// Sinon, on transmet le message à l'outil pour qu'il le gère
 		var cmd tea.Cmd
 		m.currentTool, cmd = m.currentTool.Update(msg)
 		return m, cmd
 	}
 
-	// ---------------------------------------------------------
-	// 2. GESTION DU MENU PRINCIPAL (SI AUCUN OUTIL N'EST LANCÉ)
-	// ---------------------------------------------------------
+	// Gestion du Menu Principal : Navigation et interaction système
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -106,25 +97,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		// --- Touches Système ---
+		// Commandes système (Quitter, Aide)
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 
-		// --- Changement de Thème (Touche 't') ---
+		// Changement de thème visuel
 		case key.Matches(msg, m.keys.ToggleTheme):
-			// Bascule simple entre Neon et Cyberpunk
 			if m.styles.Palette.Primary == NeonTheme.Primary {
 				m.styles = MakeStyles(CyberpunkTheme)
 			} else {
 				m.styles = MakeStyles(NeonTheme)
 			}
-			// Important : On met à jour les styles de l'aide immédiatement
 			m.help.Styles = m.styles.Help
 
-		// --- Navigation Focus (Tab) ---
+		// Navigation Focus (Onglets <-> Liste)
 		case key.Matches(msg, m.keys.Tab):
 			if m.focus == FocusCategories {
 				m.focus = FocusTools
@@ -132,11 +121,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = FocusCategories
 			}
 
-		// --- Navigation Gauche/Droite (Catégories) ---
+		// Navigation horizontale (Catégories)
 		case key.Matches(msg, m.keys.Left):
 			if m.focus == FocusCategories && m.activeCatIndex > 0 {
 				m.activeCatIndex--
-				m.activeToolIndex = 0 // Reset de la sélection outil
+				m.activeToolIndex = 0
 			}
 		case key.Matches(msg, m.keys.Right):
 			if m.focus == FocusCategories && m.activeCatIndex < len(m.categories)-1 {
@@ -144,7 +133,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeToolIndex = 0
 			}
 
-		// --- Navigation Haut/Bas (Outils) ---
+		// Navigation verticale (Liste des outils)
 		case key.Matches(msg, m.keys.Up):
 			if m.focus == FocusTools && m.activeToolIndex > 0 {
 				m.activeToolIndex--
@@ -154,15 +143,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeToolIndex++
 			}
 
-		// --- Lancement d'un outil (Entrée) ---
+		// Initialisation et lancement de l'outil sélectionné
 		case key.Matches(msg, m.keys.Enter):
 			if m.focus == FocusTools {
-				// On récupère l'outil actuellement sélectionné
 				tool := m.categories[m.activeCatIndex].Tools[m.activeToolIndex]
 
-				// Si c'est "LogV", on initialise son modèle
 				if tool.Name == "LogV" {
-					// IMPORTANT : On passe la taille de la fenêtre actuelle (m.width, m.height)
 					lv := logv.New(m.width, m.height)
 					m.currentTool = lv
 					return m, lv.Init()
@@ -193,18 +179,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	// A. Si un outil est actif, on affiche SA vue à lui (plein écran)
+	// Affichage de l'outil actif en plein écran
 	if m.currentTool != nil {
 		return m.currentTool.View()
 	}
 
-	// B. Sinon, on affiche le MENU PRINCIPAL
 	if m.width == 0 {
 		return "loading..."
 	}
 
-	// --- 0. Génération et centrage du titre ---
-	// MODIFICATION ICI : On utilise directement le style m.styles.Title (Orange/Senary)
+	// Génération du titre ASCII art
 	titleRaw := figure.NewFigure("cyberTools", "slant", true).String()
 	titleArt := m.styles.Title.Render(titleRaw)
 
@@ -214,23 +198,16 @@ func (m Model) View() string {
 		titleArt,
 	)
 
-	// --- 1. Navbar (Onglets) ---
+	// Construction de la barre d'onglets (Catégories)
 	var tabs []string
 	for i, cat := range m.categories {
-		// Par défaut : Inactif
 		style := m.styles.InactiveTab
 
-		// Si c'est l'onglet courant
 		if m.activeCatIndex == i {
-			// On prend le style Actif
 			style = m.styles.ActiveTab
-
-			// Gestion fine de la bordure selon le Focus
 			if m.focus == FocusCategories {
-				// Focus sur les onglets -> Bordure Secondaire (Cyan)
 				style = style.BorderForeground(lipgloss.Color(m.styles.Palette.Secondary))
 			} else {
-				// Focus ailleurs -> Bordure Grise
 				style = style.BorderForeground(lipgloss.Color(m.styles.Palette.Gray))
 			}
 		}
@@ -238,7 +215,7 @@ func (m Model) View() string {
 	}
 	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
-	// --- 2. Contenu (Liste outils) ---
+	// Construction de la liste des outils
 	currentTools := m.categories[m.activeCatIndex].Tools
 	var toolList strings.Builder
 
@@ -255,12 +232,11 @@ func (m Model) View() string {
 		toolList.WriteString(style.Render(cursor+name+" "+desc) + "\n")
 	}
 
+	// Configuration du conteneur principal avec bordures dynamiques selon le focus
 	const menuHeight = 15
-
-	// Couleur de la bordure de la boîte
-	boxBorderColor := lipgloss.Color(m.styles.Palette.Primary) // Par défaut (Violet/Jaune)
+	boxBorderColor := lipgloss.Color(m.styles.Palette.Primary)
 	if m.focus == FocusTools {
-		boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary) // Si Focus (Cyan/Bleu)
+		boxBorderColor = lipgloss.Color(m.styles.Palette.Secondary)
 	}
 
 	contentBox := m.styles.Window.
@@ -269,10 +245,8 @@ func (m Model) View() string {
 		BorderForeground(boxBorderColor).
 		Render(toolList.String())
 
-	// --- 3. Section Aide ---
+	// Assemblage final de l'interface graphique
 	helpView := m.help.View(m.keys)
-
-	// --- 4. Assemblage Final ---
 	appContent := lipgloss.JoinVertical(lipgloss.Left, row, contentBox, "\n"+helpView)
 
 	centeredAppContent := lipgloss.PlaceHorizontal(
@@ -296,8 +270,6 @@ func (m Model) View() string {
 		finalUI,
 	)
 }
-
-// NOTE : J'ai supprimé la fonction generateTitle car elle n'est plus nécessaire.
 
 func max(a, b int) int {
 	if a > b {

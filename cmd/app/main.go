@@ -9,15 +9,17 @@ import (
 )
 
 func main() {
+	// Initialisation du modèle principal qui contient l'état de l'interface
 	m := ui.NewModel()
 
-	// Activation de la souris et du mode AltScreen (Plein écran)
+	// Configuration du programme Bubble Tea avec support de la souris et mode plein écran (AltScreen)
 	p := tea.NewProgram(
 		m,
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(), // Permet de capturer les mouvements souris
+		tea.WithMouseCellMotion(),
 	)
 
+	// Démarrage de la boucle événementielle de la TUI
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Erreur lors du lancement de la TUI: %v", err)
 		os.Exit(1)
