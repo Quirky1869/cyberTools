@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/Quirky1869/cyberTools/tools"
-	"github.com/Quirky1869/cyberTools/tools/aed"
+	aeddsa "github.com/Quirky1869/cyberTools/tools/aed"
 	"github.com/Quirky1869/cyberTools/tools/logv"
 	"github.com/Quirky1869/cyberTools/tools/sqltui"
 	structviewer "github.com/Quirky1869/cyberTools/tools/structViewer"
@@ -77,7 +77,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.ClearScreen
 		}
 
-		if _, ok := msg.(aed.BackMsg); ok {
+		if _, ok := msg.(aeddsa.BackMsg); ok {
 			m.currentTool = nil
 			return m, tea.ClearScreen
 		}
@@ -167,7 +167,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if tool.Name == "AED" {
-					a := aed.New(m.width, m.height)
+					a := aeddsa.New(m.width, m.height)
 					m.currentTool = a
 					return m, a.Init()
 				}

@@ -1,4 +1,4 @@
-package aed
+package aeddsa
 
 import (
 	"fmt"
